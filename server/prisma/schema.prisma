@@ -1,23 +1,134 @@
+// FILE: prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql" // Or "mysql" based on your preference
+  url      = env("DATABASE_URL")
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+enum Role {
+  BUYER
+  ORGANIZER
+  ADMIN
 }
+
+enum TicketStatus {
+  ACTIVE
+  USED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  phoneNumber  String    @unique // Crucial for M-Pesa matching & OTPs
+  passwordHash String
+  name         String
+  role         Role      @default(BUYER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  events       Event[]   @relation("OrganizerEvents")
+  tickets      Ticket[]
+  orders       Order[]
+}
+
 model Event {
-  id              Int      @id @default(autoincrement())
-  title           String
-  description     String?
-  date            DateTime
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  venue       String
+  date        DateTime
+  isApproved  Boolean  @default(false) // Admin moderation gate
+  organizerId String
+  createdAt   DateTime @default(now())
 
-  price           Int      @default(0)
+  // Relations
+  organizer   User     @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
+  tiers       Tier[]
+  tickets     Ticket[]
 
-  totalTickets    Int      @default(0)
-  soldTickets     Int      @default(0)
-  remainingTickets Int     @default(0)
+  @@index([date])
+  @@index([organizerId])
+}
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+model Tier {
+  id        String   @id @default(uuid())
+  eventId   String
+  name      String   // e.g., "Regular Advance", "VIP Experience"
+  price     Decimal  @db.Decimal(10, 2)
+  capacity  Int
+  sold      Int      @default(0) // Fast tracking counters
+
+  // Relations
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets   Ticket[]
+  payments  Payment[] // 👈 ADDED: Explicitly tracks payments staging this specific tier
+
+  @@index([eventId])
+}
+
+model Order {
+  id          String        @id @default(uuid())
+  buyerId     String
+  totalAmount Decimal        @db.Decimal(10, 2)
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+
+  // Relations
+  buyer       User          @relation(fields: [buyerId], references: [id])
+  payments    Payment[]
+  tickets     Ticket[]
+
+  @@index([buyerId])
+}
+
+model Payment {
+  id                 String        @id @default(uuid())
+  orderId            String
+  amount             Decimal       @db.Decimal(10, 2)
+  provider           String
+  status             PaymentStatus @default(PENDING)
+
+  merchantRequestId  String?       @unique
+  checkoutRequestId  String?       @unique
+  mpesaReceiptNumber String?       @unique
+  createdAt          DateTime      @default(now())
+
+  tierId             String?
+  quantity           Int?
+
+  tier               Tier?         @relation(fields: [tierId], references: [id])
+
+  order              Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+model Ticket {
+  id        String       @id @default(uuid())
+  orderId   String
+  eventId   String
+  tierId    String
+  buyerId   String
+  secretCode String      @unique // 👈 CHANGED from qrHash to perfectly match payments.js route line 242!
+  status    TicketStatus @default(ACTIVE)
+  scannedAt DateTime?
+  createdAt DateTime     @default(now())
+
+  // Relations
+  order     Order        @relation(fields: [orderId], references: [id])
+  event     Event        @relation(fields: [eventId], references: [id])
+  tier      Tier         @relation(fields: [tierId], references: [id])
+  buyer     User         @relation(fields: [buyerId], references: [id])
+
+  @@index([eventId, status])
+  @@index([secretCode])
 }

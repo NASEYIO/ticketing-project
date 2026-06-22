@@ -1,52 +1,48 @@
 // FILE: src/routes/tickets.js
 const router = require('express').Router();
 const { PrismaClient } = require('@prisma/client');
-const { authenticateToken, requireRole } = require('../../../server/middleware/auth');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 const prisma = new PrismaClient();
 
 /**
- * PUBLIC/SEMI-PROTECTED TICKET SHORT-LINK DISCOVERY VIEW
- * GET /api/tickets/lookup/:id
- * Used by the attendee's mobile web pass view prior to gate validation scan
+ * 🎟️ FETCH LIVE TICKETS FOR THE SIGNED-IN BUYER WALLET
+ * GET /api/tickets/my-tickets
  */
-router.get('/lookup/:id', async (req, res, next) => {
+router.get('/my-tickets', authenticateToken, async (req, res, next) => {
   try {
-    const ticket = await prisma.ticket.findUnique({
-      where: { id: req.params.id },
+    // Queries database for active items belonging exclusively to the authenticated profile
+    const userTickets = await prisma.ticket.findMany({
+      where: { 
+        buyerId: req.user.id 
+      },
       include: {
-        event: {
-          select: { title: true, venue: true, date: true }
-        },
-        tier: {
-          select: { name: true }
-        },
-        buyer: {
-          select: { name: true }
-        }
+        event: true,
+        tier: true
+      },
+      orderBy: {
+        id: 'desc'
       }
     });
 
-    if (!ticket) {
-      return res.status(404).json({ error: "Ticket record could not be found in the network logs." });
-    }
-
-    return res.status(200).json(ticket);
+    return res.status(200).json(userTickets);
   } catch (error) {
+    console.error('Error fetching user wallet tickets:', error);
     next(error);
   }
 });
 
 /**
- * INSTANT EYE-BALL SCAN GATE CHECKPOINT VALIDATOR ENGINE
+ * 🔒 INSTANT EYE-BALL SCAN GATE CHECKPOINT VALIDATOR ENGINE
  * POST /api/tickets/validate-gate
  */
 router.post('/validate-gate', authenticateToken, requireRole(['ORGANIZER', 'ADMIN']), async (req, res, next) => {
-  const { qrHash } = req.body;
+  // 🔹 CHANGED: Destructure secretCode instead of qrHash to align with your Prisma models setup
+  const { secretCode } = req.body;
 
   try {
-    // Perform lookups on unique hash index structures
-    const ticket = await prisma.ticket.findUnique({
-      where: { qrHash },
+    // Perform lookups on unique code index structures
+    const ticket = await prisma.ticket.findFirst({
+      where: { secretCode },
       include: {
         event: true,
         tier: true,
@@ -58,7 +54,7 @@ router.post('/validate-gate', authenticateToken, requireRole(['ORGANIZER', 'ADMI
       return res.status(404).json({ 
         valid: false, 
         code: 'INVALID_TOKEN', 
-        message: 'Security Alert: Ticket signature hash pattern matching failed. Ticket does not exist.' 
+        message: 'Security Alert: Ticket signature pattern matching failed. Ticket does not exist.' 
       });
     }
 
@@ -80,7 +76,7 @@ router.post('/validate-gate', authenticateToken, requireRole(['ORGANIZER', 'ADMI
     }
 
     // Process pass validation transitions atomically
-    const verifiedCheckInPass = await prisma.ticket.update({
+    await prisma.ticket.update({
       where: { id: ticket.id },
       data: {
         status: 'USED',

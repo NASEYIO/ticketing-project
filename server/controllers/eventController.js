@@ -1,47 +1,36 @@
-// GET EVENTS
+const eventService = require("../services/eventService");
+
+// 1. GET ALL EVENTS (Placeholder)
 exports.getEvents = async (req, res) => {
   try {
-    const events = await prisma.event.findMany();
-    res.json(events);
+    // You can implement this later with: await eventService.getEvents()
+    return res.status(200).json({ message: "Get events route works!" });
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch events" });
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// CREATE EVENT
+// 2. CREATE EVENT (Your existing code)
 exports.createEvent = async (req, res) => {
   try {
-    const { title, description, date, price, totalTickets } = req.body;
-
-    const event = await prisma.event.create({
-      data: {
-        title,
-        description,
-        date: new Date(date),
-        price: Number(price || 0),
-        totalTickets: Number(totalTickets || 0),
-        soldTickets: 0,
-        remainingTickets: Number(totalTickets || 0),
-      },
-    });
-
-    res.json(event);
+    const event = await eventService.createEvent(req.body);
+    return res.status(201).json(event);
   } catch (err) {
-    res.status(500).json({ error: "Failed to create event" });
+    console.log("🔥 FULL CREATE EVENT ERROR:");
+    console.log(err);
+
+    return res.status(500).json({
+      message: err.message,
+      name: err.name,
+    });
   }
 };
 
-// DELETE EVENT ✅ FIXED
+// 3. DELETE EVENT (Placeholder)
 exports.deleteEvent = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    await prisma.event.delete({
-      where: { id: Number(id) },
-    });
-
-    res.json({ message: "Event deleted" });
+    return res.status(200).json({ message: `Delete event ${req.params.id} route works!` });
   } catch (err) {
-    res.status(500).json({ error: "Failed to delete event" });
+    return res.status(500).json({ message: err.message });
   }
 };

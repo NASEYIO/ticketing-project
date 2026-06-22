@@ -1,39 +1,16 @@
-const prisma = require("../config/prisma");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
-
-const getEvents = () => {
-
-    return prisma.event.findMany({
-        orderBy:{
-            createdAt:"desc"
-        }
-    });
-
-};
-
-
-const createEvent = (data)=>{
-
-    return prisma.event.create({
-        data
-    });
-
-};
-
-
-const deleteEvent = (id)=>{
-
-    return prisma.event.delete({
-        where:{
-            id
-        }
-    });
-
-};
-
-
-module.exports = {
-    getEvents,
-    createEvent,
-    deleteEvent
+exports.createEvent = async (data) => {
+  return await prisma.event.create({
+    data: {
+      title: data.title,
+      description: data.description,
+      date: new Date(data.date),
+      price: data.price ?? 0,
+      totalTickets: data.totalTickets ?? 0,
+      soldTickets: 0,
+      remainingTickets: data.totalTickets ?? 0
+    }
+  });
 };
