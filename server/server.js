@@ -8,6 +8,7 @@ const helmet = require('helmet');
 const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
 const paymentRoutes = require('./routes/payments');
+const categoryRoutes = require('./routes/categories'); // 👈 ALIGNED: Imported the new categories routing module
 const ticketRoutes = require('./routes/tickets');
 
 const app = express();
@@ -22,9 +23,11 @@ app.use(express.json()); // Parses incoming application/json body frames
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/categories', categoryRoutes); // 👈 ALIGNED: Registered the dropdown endpoint data pipeline
 app.use('/api/tickets', ticketRoutes);
 app.use("/api/users", require("./routes/users"));
 app.use("/api/admin", require("./routes/admin"));
+
 // Catch-all Fallback Endpoint Route
 app.use((req, res, next) => {
   res.status(404).json({ error: 'Endpoint destination requested not found on this map' });

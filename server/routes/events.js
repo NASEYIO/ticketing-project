@@ -12,7 +12,8 @@ router.get('/', async (req, res, next) => {
   try {
     const events = await prisma.event.findMany({
       include: {
-        tiers: true
+        tiers: true,
+        category: true // Included category objects in the feed summary list
       },
       orderBy: {
         date: 'asc'
@@ -33,7 +34,8 @@ router.get('/:id', async (req, res, next) => {
     const event = await prisma.event.findUnique({
       where: { id: req.params.id },
       include: {
-        tiers: true
+        tiers: true,
+        category: true // Included relational metadata for individual page lookups
       }
     });
 
@@ -52,12 +54,12 @@ router.get('/:id', async (req, res, next) => {
  * POST /api/events
  */
 router.post('/', authenticateToken, requireRole(['ORGANIZER', 'ADMIN']), async (req, res, next) => {
-  const { title, description, venue, date, category, tiers } = req.body;
+  const { title, description, venue, date, categoryId, tiers } = req.body;
   const organizerId = req.user.id;
 
   try {
-    if (!title || !venue || !date || !tiers || tiers.length === 0) {
-      return res.status(400).json({ error: "Missing required core event parameters." });
+    if (!title || !venue || !date || !categoryId || !tiers || tiers.length === 0) {
+      return res.status(400).json({ error: "Missing required core event parameters (including Category ID)." });
     }
 
     // Save event and its associated ticket pricing tiers together atomically
@@ -68,6 +70,7 @@ router.post('/', authenticateToken, requireRole(['ORGANIZER', 'ADMIN']), async (
         venue,
         date: new Date(date),
         organizerId,
+        categoryId, // Binds the new event to your existing PostgreSQL category relation index
         tiers: {
           create: tiers.map(tier => ({
             name: tier.name,
@@ -77,7 +80,8 @@ router.post('/', authenticateToken, requireRole(['ORGANIZER', 'ADMIN']), async (
         }
       },
       include: {
-        tiers: true
+        tiers: true,
+        category: true
       }
     });
 

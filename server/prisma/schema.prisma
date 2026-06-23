@@ -53,6 +53,10 @@ model Event {
   organizerId String
   createdAt   DateTime @default(now())
 
+  // 🛠️ ALIGNED: Added category relation key and mapping configuration
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+
   // Relations
   organizer   User     @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
   tiers       Tier[]
@@ -60,6 +64,7 @@ model Event {
 
   @@index([date])
   @@index([organizerId])
+  @@index([categoryId])
 }
 
 model Tier {
@@ -73,7 +78,7 @@ model Tier {
   // Relations
   event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   tickets   Ticket[]
-  payments  Payment[] // 👈 ADDED: Explicitly tracks payments staging this specific tier
+  payments  Payment[] // 👈 Explicitly tracks payments staging this specific tier
 
   @@index([eventId])
 }
@@ -109,26 +114,36 @@ model Payment {
   quantity           Int?
 
   tier               Tier?         @relation(fields: [tierId], references: [id])
-
   order              Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
+
 model Ticket {
-  id        String       @id @default(uuid())
-  orderId   String
-  eventId   String
-  tierId    String
-  buyerId   String
-  secretCode String      @unique // 👈 CHANGED from qrHash to perfectly match payments.js route line 242!
-  status    TicketStatus @default(ACTIVE)
-  scannedAt DateTime?
-  createdAt DateTime     @default(now())
+  id         String       @id @default(uuid())
+  orderId    String
+  eventId    String
+  tierId     String
+  buyerId    String
+  secretCode String       @unique // 👈 perfectly match payments.js route line 242!
+  status     TicketStatus @default(ACTIVE)
+  scannedAt  DateTime?
+  createdAt  DateTime     @default(now())
 
   // Relations
-  order     Order        @relation(fields: [orderId], references: [id])
-  event     Event        @relation(fields: [eventId], references: [id])
-  tier      Tier         @relation(fields: [tierId], references: [id])
-  buyer     User         @relation(fields: [buyerId], references: [id])
+  order      Order        @relation(fields: [orderId], references: [id])
+  event      Event        @relation(fields: [eventId], references: [id])
+  tier       Tier         @relation(fields: [tierId], references: [id])
+  buyer      User         @relation(fields: [buyerId], references: [id])
 
   @@index([eventId, status])
   @@index([secretCode])
+}
+
+// 🛠️ ALIGNED: Added brand new Category model infrastructure
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique // e.g., "Concerts", "Workshops", "Parties"
+  createdAt DateTime @default(now())
+  
+  // Inverse relation reference back to any events cataloged under this segment
+  events    Event[]
 }
