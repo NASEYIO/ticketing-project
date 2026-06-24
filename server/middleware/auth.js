@@ -1,6 +1,4 @@
 // FILE: src/middleware/auth.js
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'my_ultimate_secure_ticketing_token_signature_key_2026';
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Extract token from "Bearer <TOKEN>"

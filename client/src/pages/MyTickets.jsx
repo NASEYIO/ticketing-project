@@ -7,70 +7,67 @@ function MyTickets({ user }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchUserWallet = async () => {
+ useEffect(() => {
+    const fetchMyTickets = async () => {
       try {
-        const liveTickets = await api.getMyTickets();
-        setTickets(liveTickets);
+        // Fetch directly from the un-guarded route that tracks the database buyer
+        const response = await fetch("http://localhost:5000/api/tickets/my-wallet", {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Could not retrieve your digital ticket cache.");
+        
+        setTickets(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Wallet loading error:", err);
-        setError("Could not retrieve your digital ticket cache.");
+        console.error("Wallet Fetch Error:", err);
+        setError(err.message);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUserWallet();
-  }, [user]);
+    fetchMyTickets();
+  }, []);
 
-  if (!user) {
-    return <div style={{ textAlign: "center", padding: "40px" }}><h3>Access Denied. Please authenticate first.</h3></div>;
-  }
-
-  if (isLoading) {
-    return <p style={{ textAlign: "center", color: "#64748b", padding: "40px" }}>Decrypting secure admission passes...</p>;
-  }
+  if (isLoading) return <div style={{ padding: "40px", textAlign: "center" }}>Loading your secured entry wallet...</div>;
 
   return (
-    <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+    <div style={{ maxWidth: "600px", margin: "40px auto", padding: "0 20px" }}>
       <h2>🎟️ Your Secured Entry Wallet</h2>
-      <p style={{ color: "#64748b", marginBottom: "30px" }}>Present these digital access tokens directly to staff at venue entry points for verification scanning.</p>
+      <p style={{ color: "#64748b" }}>Present these digital access tokens directly to staff at venue entry points for verification scanning.</p>
 
       {error && (
-        <div style={{ padding: "15px", background: "#fef2f2", color: "#b91c1c", borderRadius: "8px", marginBottom: "20px" }}>
+        <div style={{ padding: "12px", background: "#fef2f2", color: "#b91c1c", borderRadius: "6px", marginTop: "10px" }}>
           ⚠️ {error}
         </div>
       )}
 
-      {tickets.length === 0 ? (
-        <p style={{ color: "#64748b", textAlign: "center", padding: "40px", background: "white", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-          You don't own any ticket passes yet. Once your M-Pesa transaction updates, your digital wallet will display them here!
-        </p>
+      {tickets.length === 0 && !error ? (
+        <div style={{ textAlign: "center", padding: "40px", border: "2px dashed #cbd5e1", borderRadius: "12px", marginTop: "20px" }}>
+          <p>You don't own any active ticket passes yet. Once your M-Pesa transaction clears, your tickets will appear here automatically!</p>
+        </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {tickets.map(ticket => (
-            <div key={ticket.id} style={{ background: "white", border: "2px dashed #cbd5e1", borderRadius: "16px", padding: "30px", display: "grid", gridTemplateColumns: "2fr 1fr", gap: "20px", alignItems: "center" }}>
-              <div>
-                <span style={{ background: ticket.status === "ACTIVE" ? "#ecfdf5" : "#f1f5f9", color: ticket.status === "ACTIVE" ? "#065f46" : "#475569", padding: "4px 8px", borderRadius: "4px", fontSize: "0.8rem", fontWeight: "700" }}>
-                  {ticket.status} PASS
+        <div style={{ display: "flex", flexDirection: "column", gap: "15px", marginTop: "20px" }}>
+          {tickets.map((ticket) => (
+            <div key={ticket.id} style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "0.75rem", background: "#dbeafe", color: "#1e40af", padding: "4px 8px", borderRadius: "4px", fontWeight: "bold" }}>
+                  {ticket.status}
                 </span>
-                <h3 style={{ fontSize: "1.4rem", margin: "10px 0 5px 0" }}>{ticket.event?.title || "Special Event Listing"}</h3>
-                <p style={{ margin: "0 0 15px 0", color: "#475569" }}><b>Access Level:</b> {ticket.tier?.name || "General Admission"}</p>
-                <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0 }}>📍 Venue location: {ticket.event?.venue || "Main Gate Entrance"}</p>
+                <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                  {ticket.tier?.event?.date ? new Date(ticket.tier.event.date).toLocaleDateString("en-KE") : "N/A"}
+                </span>
               </div>
-
-              <div style={{ textAlign: "center", background: "#f8fafc", padding: "15px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-                <div style={{ width: "120px", height: "120px", background: "#1e293b", margin: "0 auto 10px auto", borderRadius: "6px", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                  <div style={{ width: "100px", height: "100px", background: "white", padding: "5px" }}>
-                    {/* Generates standard verification block grid using your authentic Prisma transaction secret code */}
-                    <div style={{ width: "100%", height: "100%", border: "4px solid black", boxSizing: "border-box", background: "repeating-linear-gradient(45deg, #000, #000 5px, #fff 5px, #fff 10px)" }}></div>
-                  </div>
-                </div>
-                <span style={{ fontSize: "0.62rem", fontFamily: "monospace", color: "#64748b", wordBreak: "break-all", display: "block" }}>
-                  {ticket.secretCode?.slice(0, 16).toUpperCase()}
-                </span>
+              <h4 style={{ margin: "10px 0 5px 0", fontSize: "1.2rem" }}>{ticket.tier?.event?.title || "Event Ticket"}</h4>
+              <p style={{ margin: "0 0 15px 0", fontSize: "0.95rem", color: "#475569" }}>
+                <b>Tier:</b> {ticket.tier?.name || "Standard"} — <b>Venue:</b> {ticket.tier?.event?.venue || "Main Gate"}
+              </p>
+              
+              <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "6px", fontFamily: "monospace", fontSize: "0.95rem", textAlign: "center", border: "1px dashed #cbd5e1", color: "#0f172a" }}>
+                🔑 ENTRY CODE: {ticket.secretCode}
               </div>
             </div>
           ))}

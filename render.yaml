@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: your-backend-api
+    runtime: node # Change to 'python' if needed
+    repo: https://github.com/your-username/your-repo # Your repo URL
+    plan: starter # Free tier
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      # 'sync: false' means the value is set manually in Render's UI for security
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+
+# Optional: If you want Render to host your DB instead of Neon/Supabase
+# databases:
+#   - name: your-db
+#     plan: starter

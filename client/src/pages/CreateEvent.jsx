@@ -1,27 +1,49 @@
 // FILE: src/pages/CreateEvent.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 
 function CreateEvent({ user }) {
   const navigate = useNavigate();
 
-  // Access Gate Guard Intercept
-  if (!user || user.role !== "ORGANIZER") {
-    return <div style={{ padding: "40px", textAlign: "center" }}><h3>⛔ Access Denied. Organizer clearance required to publish events.</h3></div>;
-  }
-
-  // Event State Variables
+  // 🛠️ FIXED: Moved all state hooks to the top so they execute unconditionally on every single render loop
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [venue, setVenue] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState([]);
   
   // Dynamic Ticket Tiers State (Starts with one default tier)
   const [tiers, setTiers] = useState([{ name: "General Admission", price: "", capacity: "" }]);
   
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState("");
+
+  // Fetch Category Records on Mount
+  useEffect(() => {
+    fetch("http://localhost:5000/api/categories", {
+      headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Could not fetch categories.");
+        return res.json();
+      })
+      .then((data) => { setCategories(Array.isArray(data) ? data : []); })
+      .catch((err) => {
+        console.error("Error pulling category objects:", err);
+        setCategories([]);
+      });
+  }, []);
+
+  // 🛠️ Access Gate Guard Intercept (Safely positioned after all hook declarations)
+  if (!user || user.role !== "ORGANIZER") {
+    return (
+      <div style={{ padding: "40px", textAlign: "center" }}>
+        <h3>⛔ Access Denied. Organizer clearance required to publish events.</h3>
+      </div>
+    );
+  }
 
   // Handle adding a new ticket class input row (e.g. VIP)
   const handleAddTierRow = () => {
@@ -58,7 +80,6 @@ function CreateEvent({ user }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // 🛠️ ALIGNMENT HANDSHAKE: Passes the user's logged-in token to authenticate the organizerId on the backend
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
         body: JSON.stringify({
@@ -66,6 +87,7 @@ function CreateEvent({ user }) {
           description,
           date,
           venue,
+          categoryId,
           tiers: formattedTiers
         })
       });
@@ -115,6 +137,24 @@ function CreateEvent({ user }) {
             <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Venue Location</label>
             <input type="text" required placeholder="e.g., Alchemist Bar, Westlands" value={venue} onChange={e => setVenue(e.target.value)} style={{ width: "100%", padding: "12px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem" }} />
           </div>
+        </div>
+
+        {/* Dynamic Category Select Dropdown Component */}
+        <div>
+          <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Event Category</label>
+          <select 
+            required 
+            value={categoryId} 
+            onChange={e => setCategoryId(e.target.value)} 
+            style={{ width: "100%", padding: "12px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem", background: "white" }}
+          >
+            <option value="">-- Choose a Category Index --</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <hr style={{ borderColor: "#e2e8f0", margin: "10px 0" }} />
