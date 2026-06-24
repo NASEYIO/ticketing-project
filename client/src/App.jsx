@@ -7,7 +7,7 @@ import Checkout from "./pages/Checkout.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import MyTickets from "./pages/MyTickets.jsx";
-import OrganizerDashboard from "./pages/OrganizerDashboard,jsx";
+import OrganizerDashboard from "./pages/OrganizerDashboard.jsx";
 import CreateEvent from "./pages/CreateEvent.jsx";
 import AdminPanel from "./pages/AdminPanel.jsx";
 import TicketPass from "./pages/TicketPass.jsx"; 
