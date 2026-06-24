@@ -1,15 +1,18 @@
 // FILE: src/App.jsx
-import Home from "./pages/Home";
-import EventDetails from "./pages/EventDetails";
-import Checkout from "./pages/Checkout";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import MyTickets from "./pages/MyTickets";
-import OrganizerDashboard from "./pages/OrganizerDashboard";  // Fixed
-import CreateEvent from "./pages/CreateEvent";
-import AdminPanel from "./pages/AdminPanel";
-import TicketPass from "./pages/TicketPass";
-import Button from "./components/Button";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import Home from "./pages/Home.jsx";
+import EventDetails from "./pages/EventDetails.jsx";
+import Checkout from "./pages/Checkout.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import MyTickets from "./pages/MyTickets.jsx";
+import OrganizerDashboard from "./pages/OrganizerDashboard,jsx";
+import CreateEvent from "./pages/CreateEvent.jsx";
+import AdminPanel from "./pages/AdminPanel.jsx";
+import TicketPass from "./pages/TicketPass.jsx"; 
+import Button from "./components/Button.jsx";
+
 function App() {
   const [user, setUser] = useState(null); 
   const [cart, setCart] = useState(null); 
