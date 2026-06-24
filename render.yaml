@@ -2,7 +2,7 @@ services:
   - type: web
     name: ticketing-backend
     runtime: node
-    repo: https://github.com/your-username/ticketing-project  # Update this URL
+    repo: https://github.com/NASEYIO/ticketing-project  # Update this URL
     plan: free
     buildCommand: cd server && npm install
     startCommand: cd server && npm start
