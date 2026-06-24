@@ -63,8 +63,8 @@ function App() {
             
             {!user && (
               <>
-                <Link to="/login" style={{ color: "#475569", textDecoration: "none", fontWeight: "500" }}>Organize an Event</Link>
-                <Link to="/login" style={{ color: "#475569", textDecoration: "none", fontWeight: "500" }}>Sign In</Link>
+                <Link to="/Login" style={{ color: "#475569", textDecoration: "none", fontWeight: "500" }}>Organize an Event</Link>
+                <Link to="/Login" style={{ color: "#475569", textDecoration: "none", fontWeight: "500" }}>Sign In</Link>
                 <Button as={Link} to="/register" style={{ textDecoration: "none" }}>Sign Up</Button>
               </>
             )}
@@ -74,6 +74,7 @@ function App() {
                 <Link to="/buyer/tickets" style={{ color: "#2563eb", textDecoration: "none", fontWeight: "600" }}>🎟️ My Tickets</Link>
                 <Button onClick={logout} variant="secondary" size="sm">Logout ({user.name})</Button>
               </>
+              
             )}
 
             {user && user.role === "ORGANIZER" && (
