@@ -314,5 +314,94 @@ router.get('/organizer-metrics', async (req, res, next) => {
     next(err);
   }
 });
+// FILE: server/routes/payments.js
+
+/* =========================================================
+   MPESA WEBHOOK CALLBACK (Fully Aligned to Prisma Schema)
+   POST /api/payments/callback
+========================================================= */
+router.post('/callback', async (req, res) => {
+  // Acknowledge receipt to Safaricom immediately
+  res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
+
+  try {
+    const { Body } = req.body;
+    if (!Body || !Body.stkCallback) return;
+
+    const { CheckoutRequestID, ResultCode, CallbackMetadata } = Body.stkCallback;
+
+    console.log(`Processing callback for CheckoutRequestID: ${CheckoutRequestID} with ResultCode: ${ResultCode}`);
+
+    if (ResultCode === 0) {
+      // Find the tracking payment
+      const trackingPayment = await prisma.payment.findFirst({
+        where: { checkoutRequestId: CheckoutRequestID },
+        include: { tier: true } // Sourced to grab eventId instantly
+      });
+
+      if (!trackingPayment) {
+        console.error(`❌ Lookup Failed: No payment tracking found matching CheckoutRequestID ${CheckoutRequestID}`);
+        return;
+      }
+
+      // 🛠️ Schema Alignment: Enum expects SUCCESSFUL, not COMPLETED
+      if (trackingPayment.status === 'SUCCESSFUL') {
+        console.log(`ℹ️ Info: Payment ${trackingPayment.id} was already marked SUCCESSFUL.`);
+        return;
+      }
+
+      const metadataItems = CallbackMetadata?.Item || [];
+      const receiptItem = metadataItems.find(item => item.Name === 'MpesaReceiptNumber');
+      const mpesaReceiptNumber = receiptItem ? String(receiptItem.Value) : `MPESA-${Date.now()}`;
+
+      const parentOrder = await prisma.order.findUnique({
+        where: { id: trackingPayment.orderId }
+      });
+
+      if (!parentOrder) {
+        console.error(`❌ Error: Parent order row ID ${trackingPayment.orderId} missing.`);
+        return;
+      }
+
+      // Execute transaction updates atomically
+      await prisma.$transaction(async (tx) => {
+        // 1. Mark payment as SUCCESSFUL and link the Safaricom Receipt string
+        await tx.payment.update({
+          where: { id: trackingPayment.id },
+          data: { 
+            status: 'SUCCESSFUL', 
+            mpesaReceiptNumber: mpesaReceiptNumber
+          }
+        });
+
+        // 2. Mark the parent baseline order record as SUCCESSFUL
+        await tx.order.update({
+          where: { id: trackingPayment.orderId },
+          data: { status: 'SUCCESSFUL' }
+        });
+
+        // 3. Loop generate physical tickets filling out all mandatory schema values
+        for (let i = 0; i < (trackingPayment.quantity || 1); i++) {
+          const uniqueSecret = `TIC-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+          
+          await tx.ticket.create({
+            data: {
+              orderId: trackingPayment.orderId,          // 🛠️ Aligned schema requirement
+              eventId: trackingPayment.tier.eventId,      // 🛠️ Aligned schema requirement
+              tierId: trackingPayment.tierId,
+              buyerId: parentOrder.buyerId,
+              status: 'ACTIVE',
+              secretCode: uniqueSecret
+            }
+          });
+        }
+      });
+      
+      console.log(`✅ Success Core Complete: Generated ${trackingPayment.quantity} active tickets for Buyer ID: ${parentOrder.buyerId}`);
+    }
+  } catch (error) {
+    console.error("❌ M-Pesa Callback Critical Transaction Engine Breakdown:", error);
+  }
+});
 
 module.exports = router;

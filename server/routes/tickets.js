@@ -16,7 +16,7 @@ router.get('/my-wallet', async (req, res, next) => {
     }
 
     // Queries database for active items belonging exclusively to our baseline buyer
-    const userTickets = await prisma.ticket.findMany({
+    const tickets = await prisma.ticket.findMany({
       where: { 
         buyerId: liveBuyer.id 
       },
@@ -33,7 +33,7 @@ router.get('/my-wallet', async (req, res, next) => {
       }
     });
 
-    return res.status(200).json(userTickets);
+    return res.status(200).json(tickets);
   } catch (error) {
     console.error('Error fetching user wallet tickets:', error);
     next(error);
