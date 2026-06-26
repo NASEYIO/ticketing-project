@@ -16,7 +16,19 @@ const app = express();
 // Security Hardening Middlewares
 // Adjusted helmet for relaxed development cross-origin resource sharing policies
 app.use(helmet({ crossOriginResourcePolicy: false })); 
-app.use(cors({ origin: '*' })); // Allows smooth communication with your local Vite client (port 5173)
+
+// 🛠️ FIX: Explicitly allow your Vercel production domain and local ports to clear CORS blocks
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://client-oql74by2d-agathanaseyio-3680s-projects.vercel.app' // 🚀 Your Live Vercel App
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning']
+}));
+
 app.use(express.json()); // Parses incoming application/json body frames
 
 // API Route Mountpoints
