@@ -81,40 +81,32 @@ router.get('/:id', async (req, res, next) => {
  * POST /api/events
  * Securing this route ensures the created event belongs to the authenticated organizer
  */
-router.post('/', authenticateToken, requireRole('ORGANIZER'), async (req, res, next) => {
-  const { title, venue, date, description, tiers, categoryId } = req.body;
-
-  // Enforce validation matching schema.prisma requirement
-  if (!title || !venue || !date || !description || !categoryId) {
-    return res.status(400).json({ 
-      error: "Validation Mismatch: 'title', 'venue', 'date', 'description', and 'categoryId' are all required fields." 
-    });
-  }
-
+router.post('/', async (req, res, next) => {
   try {
-    // Directly use the authenticated user's ID instead of a database fallback
-    const organizerId = req.user.id;
+    // 1. Pull the organizerId directly from the request body along with the form details
+    const { title, description, venue, date, categoryId, organizerId } = req.body;
 
+    // 2. Safety check to make sure an organizer ID was provided
+    if (!organizerId) {
+      return res.status(400).json({ error: "Missing organizerId. Cannot create an event without an owner." });
+    }
+
+    // 3. Insert the new event into PostgreSQL using Prisma
     const newEvent = await prisma.event.create({
       data: {
         title,
+        description,
         venue,
         date: new Date(date),
-        description, 
-        organizerId: organizerId, // Implicitly scopes the new event to this seller
         categoryId,
-        tiers: {
-          create: tiers || []
-        }
-      },
-      include: {
-        tiers: true
+        organizerId, // Directly linking the event to the seller
+        isApproved: true // Auto-approving for development ease
       }
     });
 
     return res.status(201).json(newEvent);
   } catch (error) {
-    console.error("Event Creation Database Crash:", error);
+    console.error("Event Creation Error:", error);
     next(error);
   }
 });

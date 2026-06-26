@@ -5,7 +5,8 @@ import Button from "../components/Button";
 
 function CreateEvent({ user }) {
   const navigate = useNavigate();
-console.log("👤 CURRENT ACTIVE USER OBJECT CONTEXT:", user);
+  console.log("👤 CURRENT ACTIVE USER OBJECT CONTEXT (PROP):", user);
+
   // State hooks executed unconditionally on every single render loop
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -14,16 +15,22 @@ console.log("👤 CURRENT ACTIVE USER OBJECT CONTEXT:", user);
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState([]);
   
+  // 🛠️ Dynamic Backup for Organizer Session Recovery
+  const [resolvedUser, setResolvedUser] = useState(null);
+  
   // Dynamic Ticket Tiers State (Starts with one default tier)
   const [tiers, setTiers] = useState([{ name: "General Admission", price: "", capacity: "" }]);
   
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch Category Records on Mount (JWT-Free)
+  const BACKEND_URL = "https://nanometer-avenge-shadow.ngrok-free.dev";
+
+  // Fetch Category Records and Resolve Identity Fallbacks on Mount
   useEffect(() => {
-   fetch("https://nanometer-avenge-shadow.ngrok-free.dev/api/categories", {
-    headers: { "Content-Type": "application/json" }
+    // 1. Fetch live PostgreSQL categories over the Ngrok tunnel
+    fetch(`${BACKEND_URL}/api/categories`, {
+      headers: { "Content-Type": "application/json" }
     })
       .then((res) => {
         if (!res.ok) throw new Error("Could not fetch categories.");
@@ -34,10 +41,42 @@ console.log("👤 CURRENT ACTIVE USER OBJECT CONTEXT:", user);
         console.error("Error pulling category objects:", err);
         setCategories([]);
       });
-  }, []);
 
-  // Access Gate Guard Intercept (Safely positioned after all hook declarations)
-  if (!user || user.role !== "ORGANIZER") {
+    // 2. 🛠️ FALLBACK IDENTITY RESOLUTION: Recover the database context via localStorage keys if the prop is blank
+    if (!user || !user.id) {
+      const storedEmail = localStorage.getItem("userEmail");
+      if (storedEmail) {
+        console.log(`🔍 Attempting backend identity recovery for email: ${storedEmail}`);
+        fetch(`${BACKEND_URL}/api/users?email=${storedEmail}`)
+          .then((res) => {
+            if (!res.ok) throw new Error("Could not verify session user.");
+            return res.json();
+          })
+          .then((data) => {
+            if (data && data.id) {
+              setResolvedUser(data);
+              console.log("✅ Session user safely recovered from database:", data);
+            }
+          })
+          .catch((err) => console.error("Database user context recovery failed:", err));
+      }
+    }
+  }, [user]);
+
+  // Use the valid prop if it exists, otherwise fall back to the resolved database hook state
+  const currentUserContext = user?.id ? user : resolvedUser;
+
+  // Access Gate Guard Intercept (Safely checking the computed final identity)
+  if (!currentUserContext) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center" }}>
+        <h3>⌛ Connecting Secure Session Context...</h3>
+        <p style={{ color: "#64748b" }}>Please make sure you are logged in to your account on this domain.</p>
+      </div>
+    );
+  }
+
+  if (currentUserContext.role !== "ORGANIZER") {
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
         <h3>⛔ Access Denied. Organizer clearance required to publish events.</h3>
@@ -76,11 +115,10 @@ console.log("👤 CURRENT ACTIVE USER OBJECT CONTEXT:", user);
     }));
 
     try {
-     const response = await fetch("https://nanometer-avenge-shadow.ngrok-free.dev/api/events", {
-  method: "POST",
+      const response = await fetch(`${BACKEND_URL}/api/events`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json"
-          // 🛠️ REMOVED: JWT Authorization header dropped completely
         },
         body: JSON.stringify({
           title,
@@ -88,7 +126,7 @@ console.log("👤 CURRENT ACTIVE USER OBJECT CONTEXT:", user);
           date,
           venue,
           categoryId,
-          organizerId: user.id, // 🛠️ ADDED: Explicitly sending real database user ID context in body
+          organizerId: currentUserContext.id, // 🛠️ Sourced cleanly from our robust context checker
           tiers: formattedTiers
         })
       });

@@ -28,7 +28,15 @@ function Login({ setUser, cart }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Authentication failed. Check credentials.");
 
+      // Store JWT security tokens
       localStorage.setItem("token", data.token);
+      
+      // 🛠️ PERSIST EMAIL TO LOCALSTORAGE FOR VERCEL RECOVERY FALLBACKS
+      // Captures the authentic database email field, even if the user logged in using a username handle
+      if (data.user && data.user.email) {
+        localStorage.setItem("userEmail", data.user.email);
+      }
+
       setUser(data.user); 
 
       if (cart) {
