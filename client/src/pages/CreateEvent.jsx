@@ -5,7 +5,7 @@ import Button from "../components/Button";
 
 function CreateEvent({ user }) {
   const navigate = useNavigate();
-
+console.log("👤 CURRENT ACTIVE USER OBJECT CONTEXT:", user);
   // State hooks executed unconditionally on every single render loop
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -22,8 +22,8 @@ function CreateEvent({ user }) {
 
   // Fetch Category Records on Mount (JWT-Free)
   useEffect(() => {
-    fetch("http://localhost:5000/api/categories", {
-      headers: { "Content-Type": "application/json" }
+   fetch("https://nanometer-avenge-shadow.ngrok-free.dev/api/categories", {
+    headers: { "Content-Type": "application/json" }
     })
       .then((res) => {
         if (!res.ok) throw new Error("Could not fetch categories.");
@@ -76,8 +76,8 @@ function CreateEvent({ user }) {
     }));
 
     try {
-      const response = await fetch("http://localhost:5000/api/events", {
-        method: "POST",
+     const response = await fetch("https://nanometer-avenge-shadow.ngrok-free.dev/api/events", {
+  method: "POST",
         headers: {
           "Content-Type": "application/json"
           // 🛠️ REMOVED: JWT Authorization header dropped completely
