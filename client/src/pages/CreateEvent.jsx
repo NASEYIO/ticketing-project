@@ -6,7 +6,7 @@ import Button from "../components/Button";
 function CreateEvent({ user }) {
   const navigate = useNavigate();
 
-  // 🛠️ FIXED: Moved all state hooks to the top so they execute unconditionally on every single render loop
+  // State hooks executed unconditionally on every single render loop
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
@@ -20,10 +20,10 @@ function CreateEvent({ user }) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch Category Records on Mount
+  // Fetch Category Records on Mount (JWT-Free)
   useEffect(() => {
     fetch("http://localhost:5000/api/categories", {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      headers: { "Content-Type": "application/json" }
     })
       .then((res) => {
         if (!res.ok) throw new Error("Could not fetch categories.");
@@ -36,7 +36,7 @@ function CreateEvent({ user }) {
       });
   }, []);
 
-  // 🛠️ Access Gate Guard Intercept (Safely positioned after all hook declarations)
+  // Access Gate Guard Intercept (Safely positioned after all hook declarations)
   if (!user || user.role !== "ORGANIZER") {
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
@@ -79,8 +79,8 @@ function CreateEvent({ user }) {
       const response = await fetch("http://localhost:5000/api/events", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
+          "Content-Type": "application/json"
+          // 🛠️ REMOVED: JWT Authorization header dropped completely
         },
         body: JSON.stringify({
           title,
@@ -88,6 +88,7 @@ function CreateEvent({ user }) {
           date,
           venue,
           categoryId,
+          organizerId: user.id, // 🛠️ ADDED: Explicitly sending real database user ID context in body
           tiers: formattedTiers
         })
       });
