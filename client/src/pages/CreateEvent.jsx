@@ -30,7 +30,10 @@ function CreateEvent({ user }) {
   useEffect(() => {
     // 1. Fetch live PostgreSQL categories over the Ngrok tunnel
     fetch(`${BACKEND_URL}/api/categories`, {
-      headers: { "Content-Type": "application/json" }
+      headers: { 
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true" // 🛠️ Added to bypass Ngrok warning page
+      }
     })
       .then((res) => {
         if (!res.ok) throw new Error("Could not fetch categories.");
@@ -47,7 +50,12 @@ function CreateEvent({ user }) {
       const storedEmail = localStorage.getItem("userEmail");
       if (storedEmail) {
         console.log(`🔍 Attempting backend identity recovery for email: ${storedEmail}`);
-        fetch(`${BACKEND_URL}/api/users?email=${storedEmail}`)
+        fetch(`${BACKEND_URL}/api/users?email=${storedEmail}`, {
+          headers: { 
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true" // 🛠️ Added to bypass Ngrok warning page here too
+          }
+        })
           .then((res) => {
             if (!res.ok) throw new Error("Could not verify session user.");
             return res.json();
@@ -118,7 +126,8 @@ function CreateEvent({ user }) {
       const response = await fetch(`${BACKEND_URL}/api/events`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true" // 🛠️ Added to bypass Ngrok warning page on submission
         },
         body: JSON.stringify({
           title,
@@ -126,7 +135,7 @@ function CreateEvent({ user }) {
           date,
           venue,
           categoryId,
-          organizerId: currentUserContext.id, // 🛠️ Sourced cleanly from our robust context checker
+          organizerId: currentUserContext.id, // Sourced cleanly from our robust context checker
           tiers: formattedTiers
         })
       });
