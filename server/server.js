@@ -17,13 +17,30 @@ const app = express();
 // Adjusted helmet for relaxed development cross-origin resource sharing policies
 app.use(helmet({ crossOriginResourcePolicy: false })); 
 
-// 🛠️ FIX: Explicitly allow your Vercel production domain and local ports to clear CORS blocks
+// 🛠️ DYNAMIC CORS ENGINE: Dynamically accepts changing Vercel domains + local test environments
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://client-oql74by2d-agathanaseyio-3680s-projects.vercel.app' // 🚀 Your Live Vercel App
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
+    
+    const allowedDomains = [
+      'localhost',
+      '127.0.0.1',
+      '.vercel.app', 
+        '.ngrok-free.dev', // 👈 ADD THIS
+    '192.168.',        // 👈 ADD THIS for LAN
+    '10.',             // 👈 ADD THIS for other LAN ranges
+    '172.'           // 🚀 Automatically accepts any deployment url Vercel creates
+    ];
+
+    const isAllowed = allowedDomains.some(domain => origin.includes(domain));
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning']

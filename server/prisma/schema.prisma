@@ -54,8 +54,8 @@ model Event {
   createdAt   DateTime @default(now())
 
   // 🛠️ ALIGNED: Added category relation key and mapping configuration
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
 
   // Relations
   organizer   User     @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
