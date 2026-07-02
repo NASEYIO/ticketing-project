@@ -26,7 +26,8 @@ app.use(cors({
     const allowedDomains = [
       'localhost',
       '127.0.0.1',
-      '.vercel.app', 
+      'vercel.app', 
+      'io-3680s-projects',
       '.ngrok-free.dev', // 👈 ADD THIS
     '192.168.',        // 👈 ADD THIS for LAN
     '10.',             // 👈 ADD THIS for other LAN ranges
@@ -38,6 +39,7 @@ app.use(cors({
     if (isAllowed) {
       callback(null, true);
     } else {
+      console.log(`⚠️ CORS Blocked Origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
