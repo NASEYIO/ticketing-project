@@ -27,7 +27,7 @@ app.use(cors({
       'localhost',
       '127.0.0.1',
       '.vercel.app', 
-        '.ngrok-free.dev', // 👈 ADD THIS
+      '.ngrok-free.dev', // 👈 ADD THIS
     '192.168.',        // 👈 ADD THIS for LAN
     '10.',             // 👈 ADD THIS for other LAN ranges
     '172.'           // 🚀 Automatically accepts any deployment url Vercel creates
