@@ -219,7 +219,7 @@ function App() {
             flex: 1, // Takes remaining height
             display: "flex",
             justifyContent: "center", // Horizontally centers content
-            padding: "20px", // Consistent padding all around
+            padding: "20px 15px", // Slightly tweaked padding for optimal mobile viewing
             width: "100%",
             boxSizing: "border-box", // Important! Prevents padding from breaking width
           }}
@@ -229,11 +229,10 @@ function App() {
             style={{
               width: "100%",
               maxWidth: "1200px",
-              // Optional: Add a subtle background to see the container
-              // backgroundColor: "rgba(0,0,0,0.02)",
-              // borderRadius: "8px",
-              // padding: "10px",
-              overflow: "auto", // Prevents children from overflowing
+              display: "flex",        /* ADDED: Ensures main page views flex cleanly */
+              flexDirection: "column", /* ADDED: Keeps sections standard layout stacked top-to-bottom */
+              alignItems: "center",    /* ADDED: Forces children pages (like Home) to center align self-containers */
+              overflow: "hidden",      /* CHANGED: Prevents unwanted scroll bars breaking responsive widths */
             }}
           >
             <Routes>
