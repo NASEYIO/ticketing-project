@@ -47,22 +47,26 @@ function App() {
 
   return (
     <Router>
-      {/* Main wrapper: Full viewport height, flex column for sticky header */}
+      {/* Main wrapper: Enforces strict screen boundaries on mobile devices */}
       <div
         style={{
           fontFamily: "Inter, system-ui, sans-serif",
           background: "#f8fafc",
           minHeight: "100vh",
+          width: "100%",
+          maxWidth: "100vw",       /* Prevents menu from making the page too wide */
+          overflowX: "hidden",     /* Cuts off accidental horizontal screen scrolling */
           color: "#0f172a",
           display: "flex",
           flexDirection: "column",
+          boxSizing: "border-box"
         }}
       >
         {/* HEADER: Stays at top */}
         <header
           style={{
             background: "#ffffff",
-            padding: "15px 20px", // Reduced padding for mobile
+            padding: "12px 15px", 
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -70,15 +74,16 @@ function App() {
             position: "sticky",
             top: 0,
             zIndex: 50,
-            flexWrap: "wrap", // Allows header to wrap on small screens
             gap: "10px",
+            width: "100%",
+            boxSizing: "border-box"
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Link
               to="/"
               style={{
-                fontSize: "1.4rem",
+                fontSize: "1.2rem", 
                 fontWeight: "800",
                 color: "#2563eb",
                 textDecoration: "none",
@@ -90,9 +95,9 @@ function App() {
             <span
               style={{
                 background: "#f1f5f9",
-                padding: "4px 10px",
+                padding: "4px 8px",
                 borderRadius: "20px",
-                fontSize: "0.75rem",
+                fontSize: "0.7rem",
                 color: "#475569",
                 fontWeight: "600",
               }}
@@ -101,12 +106,16 @@ function App() {
             </span>
           </div>
 
+          {/* Nav Container: Behaves like a swipable horizontal row on small screens */}
           <nav
             style={{
               display: "flex",
-              gap: "15px",
+              gap: "8px",
               alignItems: "center",
-              flexWrap: "wrap",
+              overflowX: "auto",        /* Allows buttons to scroll side-to-side seamlessly */
+              maxWidth: "100%",
+              paddingBottom: "4px",
+              WebkitOverflowScrolling: "touch"
             }}
           >
             <Button
@@ -114,9 +123,9 @@ function App() {
               to="/"
               variant="secondary"
               size="sm"
-              style={{ textDecoration: "none" }}
+              style={{ textDecoration: "none", whiteSpace: "nowrap" }}
             >
-              Explore Events
+              Explore
             </Button>
 
             {!user && (
@@ -127,7 +136,8 @@ function App() {
                     color: "#475569",
                     textDecoration: "none",
                     fontWeight: "500",
-                    fontSize: "0.9rem",
+                    fontSize: "0.85rem",
+                    whiteSpace: "nowrap"
                   }}
                 >
                   Organize
@@ -138,7 +148,8 @@ function App() {
                     color: "#475569",
                     textDecoration: "none",
                     fontWeight: "500",
-                    fontSize: "0.9rem",
+                    fontSize: "0.85rem",
+                    whiteSpace: "nowrap"
                   }}
                 >
                   Sign In
@@ -146,7 +157,8 @@ function App() {
                 <Button
                   as={Link}
                   to="/register"
-                  style={{ textDecoration: "none" }}
+                  size="sm"
+                  style={{ textDecoration: "none", whiteSpace: "nowrap" }}
                 >
                   Sign Up
                 </Button>
@@ -161,12 +173,13 @@ function App() {
                     color: "#2563eb",
                     textDecoration: "none",
                     fontWeight: "600",
-                    fontSize: "0.9rem",
+                    fontSize: "0.85rem",
+                    whiteSpace: "nowrap"
                   }}
                 >
                   🎟️ Tickets
                 </Link>
-                <Button onClick={logout} variant="secondary" size="sm">
+                <Button onClick={logout} variant="secondary" size="sm" style={{ whiteSpace: "nowrap" }}>
                   Logout
                 </Button>
               </>
@@ -184,11 +197,12 @@ function App() {
                     color: "#1e293b",
                     borderColor: "transparent",
                     textDecoration: "none",
+                    whiteSpace: "nowrap"
                   }}
                 >
                   Dashboard
                 </Button>
-                <Button onClick={logout} variant="secondary" size="sm">
+                <Button onClick={logout} variant="secondary" size="sm" style={{ whiteSpace: "nowrap" }}>
                   Logout
                 </Button>
               </>
@@ -201,11 +215,11 @@ function App() {
                   to="/admin"
                   variant="danger"
                   size="sm"
-                  style={{ textDecoration: "none" }}
+                  style={{ textDecoration: "none", whiteSpace: "nowrap" }}
                 >
                   Admin Panel
                 </Button>
-                <Button onClick={logout} variant="secondary" size="sm">
+                <Button onClick={logout} variant="secondary" size="sm" style={{ whiteSpace: "nowrap" }}>
                   Logout
                 </Button>
               </>
@@ -213,26 +227,22 @@ function App() {
           </nav>
         </header>
 
-        {/* MAIN CONTENT: Perfect centering with flex */}
+        {/* MAIN CONTENT */}
         <main
           style={{
-            flex: 1, // Takes remaining height
+            flex: 1, 
             display: "flex",
-            justifyContent: "center", // Horizontally centers content
-            padding: "20px 15px", // Slightly tweaked padding for optimal mobile viewing
+            justifyContent: "center", /* Horizontally centers content wrapper */
+            padding: "20px 12px", 
             width: "100%",
-            boxSizing: "border-box", // Important! Prevents padding from breaking width
+            boxSizing: "border-box", 
           }}
         >
-          {/* Content wrapper: Controls max width and prevents overflow */}
           <div
             style={{
               width: "100%",
               maxWidth: "1200px",
-              display: "flex",        /* ADDED: Ensures main page views flex cleanly */
-              flexDirection: "column", /* ADDED: Keeps sections standard layout stacked top-to-bottom */
-              alignItems: "center",    /* ADDED: Forces children pages (like Home) to center align self-containers */
-              overflow: "hidden",      /* CHANGED: Prevents unwanted scroll bars breaking responsive widths */
+              boxSizing: "border-box"
             }}
           >
             <Routes>

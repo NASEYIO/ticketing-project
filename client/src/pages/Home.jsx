@@ -1,5 +1,4 @@
 /// FILE: src/pages/Home.jsx
-
 import { useState, useEffect } from "react";
 import EventCard from "../components/EventCard";
 import { api } from "../services/api";
@@ -54,24 +53,23 @@ function Home() {
   });
 
   return (
-    /* Main container wrapper centered across mobile views */
     <div style={{ width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
 
-      {/* Hero Blue Card */}
+      {/* Hero Card */}
       <div
         style={{
           background: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)",
           borderRadius: "16px",
-          padding: "40px 20px", /* Adjusted slightly down on mobile sides to give text more space */
+          padding: "40px 20px", /* Slightly brought down side padding for clean mobile edges */
           color: "white",
           marginBottom: "40px",
           width: "100%",
-          boxSizing: "border-box", /* Forces padding to stay within inner width bounds */
+          boxSizing: "border-box", /* Keeps internal items locked inside */
         }}
       >
         <h1
           style={{
-            fontSize: "2.2rem", /* Scaled slightly down to prevent single letter line wrapping */
+            fontSize: "2.2rem", /* Reduced text size slightly to look sharp on small screens */
             margin: "0 0 10px 0",
             fontWeight: "800"
           }}
@@ -89,7 +87,7 @@ function Home() {
           Discover verified events across East Africa. Instant tickets delivered via SMS and Email.
         </p>
 
-        {/* Search Bar Input */}
+        {/* Fixed Search Bar Input */}
         <input
           type="text"
           placeholder="🔍 Search events, artists, venues or cities..."
@@ -97,17 +95,17 @@ function Home() {
           onChange={(e) => setSearch(e.target.value)}
           style={{
             width: "100%",
-            maxWidth: "100%", /* Keeps it scaling inside your blue element boundary */
+            maxWidth: "100%",
             padding: "16px 20px",
             borderRadius: "12px",
             border: "none",
             fontSize: "1rem",
-            boxSizing: "border-box", /* Crucial: fixes the breaking/overlapping issue */
+            boxSizing: "border-box", /* CRUCIAL: Keeps search input completely inside blue area */
           }}
         />
       </div>
 
-      {/* Horizontal Scroll Categories */}
+      {/* Category List */}
       <div
         style={{
           display: "flex",
@@ -115,7 +113,7 @@ function Home() {
           marginBottom: "30px",
           overflowX: "auto",
           width: "100%",
-          paddingBottom: "8px" /* Extra room for mobile scroll bars */
+          paddingBottom: "8px"
         }}
       >
         {categories.map(cat => (
@@ -126,7 +124,7 @@ function Home() {
             size="sm"
             style={{
               borderRadius: "24px",
-              whiteSpace: "nowrap" /* Keeps text strings from stacking on small screen spaces */
+              whiteSpace: "nowrap"
             }}
           >
             {cat}
