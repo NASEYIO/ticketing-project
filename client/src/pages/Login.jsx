@@ -19,7 +19,7 @@ function Login({ setUser, cart }) {
     setErrorMessage("");
 
     try {
-    const response = await fetch("https://nanometer-avenge-shadow.ngrok-free.dev/api/auth/login", {
+   const response = await fetch("https://ticketing-backend-v438.onrender.com/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password }),

@@ -32,7 +32,11 @@ export const api = {
       throw error;
     }
   },
-
+// in api.js
+login: async ({ identifier, password }) => {
+  const response = await axios.post(`${BASE_URL}/auth/login`, { identifier, password });
+  return response.data;
+},
   // 2. Fetch specific single event data along with its nested ticket tiers
   getEventDetails: async (id) => {
     try {
