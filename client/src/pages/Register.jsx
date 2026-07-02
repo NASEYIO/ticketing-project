@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
+import { api } from "../services/api";
 
 function Register({ setUser }) {
   const [name, setName] = useState("");
@@ -18,31 +19,8 @@ function Register({ setUser }) {
     setError("");
 
     try {
-      const response = await fetch(
-  "https://ticketing-backend-v438.onrender.com/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            phoneNumber,
-            password,
-            role
-          })
-        }
-      );
+      const data = await api.register({ name, email, phoneNumber, password, role });
 
-      const data = await response.json();
-
-      if (!response.ok)
-        throw new Error(
-          data.error || "Registration process rejected."
-        );
-
-      // 🛠️ ALIGNMENT FIX: Storing under key name "token" to match api.js session handshake
       localStorage.setItem("token", data.token);
 
       const base64Url = data.token.split(".")[1];

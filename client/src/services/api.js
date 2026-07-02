@@ -5,23 +5,45 @@ const BASE_URL = 'https://ticketing-backend-v438.onrender.com/api';
 
 // Helper function to extract token safely from localStorage
 const getAuthHeader = () => {
-  // 🔹 DEBUG LOG: Let's see exactly what key names exist in your browser right now
   const allKeys = Object.keys(localStorage);
-  const token = localStorage.getItem('token') || localStorage.getItem('jwt'); // 👈 Tries both common names
+  const token = localStorage.getItem('token') || localStorage.getItem('jwt');
 
   if (!token) {
     console.error(
-      "🛑 HANDSHAKE FAULT: No token found in browser storage! Available storage keys are:", 
+      "🛑 HANDSHAKE FAULT: No token found in browser storage! Available storage keys are:",
       allKeys
     );
     return {};
   }
 
-  // Double check formatting structure matches Express Expectation
   return { Authorization: `Bearer ${token}` };
 };
 
 export const api = {
+  // Auth: login
+  login: async ({ identifier, password }) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/login`, { identifier, password });
+      return response.data;
+    } catch (error) {
+      console.error("Login request failed:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Authentication failed. Check credentials.");
+    }
+  },
+
+  // Auth: register
+  register: async ({ name, email, phoneNumber, password, role }) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/register`, {
+        name, email, phoneNumber, password, role
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Register request failed:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Registration process rejected.");
+    }
+  },
+
   // 1. Fetch all events for your homepage search grid
   getEvents: async () => {
     try {
@@ -32,11 +54,7 @@ export const api = {
       throw error;
     }
   },
-// in api.js
-login: async ({ identifier, password }) => {
-  const response = await axios.post(`${BASE_URL}/auth/login`, { identifier, password });
-  return response.data;
-},
+
   // 2. Fetch specific single event data along with its nested ticket tiers
   getEventDetails: async (id) => {
     try {
@@ -54,11 +72,10 @@ login: async ({ identifier, password }) => {
       const response = await axios.post(
         `${BASE_URL}/payments/checkout`,
         { tierId, quantity, phoneNumber },
-        { headers: getAuthHeader() } // Passes the active user session securely
+        { headers: getAuthHeader() }
       );
       return response.data;
     } catch (error) {
-      // Safely bubble up server error messages (like 'Invalid Password' or balance failures)
       console.error("Checkout transaction initialization rejected:", error.response?.data || error);
       throw new Error(error.response?.data?.message || "M-Pesa Checkout transmission failed.");
     }
@@ -68,7 +85,7 @@ login: async ({ identifier, password }) => {
   getMyTickets: async () => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/tickets/my-tickets`, 
+        `${BASE_URL}/tickets/my-tickets`,
         { headers: getAuthHeader() }
       );
       return response.data;
