@@ -233,7 +233,7 @@ function App() {
               // backgroundColor: "rgba(0,0,0,0.02)",
               // borderRadius: "8px",
               // padding: "10px",
-              overflow: "hidden", // Prevents children from overflowing
+              overflow: "auto", // Prevents children from overflowing
             }}
           >
             <Routes>
