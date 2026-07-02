@@ -1,7 +1,7 @@
 // FILE: src/services/api.js
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = 'https://ticketing-backend-v438.onrender.com';
 
 // Helper function to extract token safely from localStorage
 const getAuthHeader = () => {
