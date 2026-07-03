@@ -77,38 +77,52 @@ function CreateEvent({ user }) {
     setTiers(updatedTiers);
   };
 
-  const handleEventSubmission = async (e) => {
-    e.preventDefault();
-    setIsPublishing(true);
-    setError("");
+ const handleEventSubmission = async (e) => {
+  e.preventDefault();
+  setIsPublishing(true);
+  setError("");
 
-    const formattedTiers = tiers.map(t => ({
-      name: t.name || "General Admission",
-      price: parseFloat(t.price) || 0,
-      capacity: parseInt(t.capacity) || 0
-    }));
+  // Safely format tiers
+  const formattedTiers = tiers.map(t => ({
+    name: t.name || "General Admission",
+    price: parseFloat(t.price) || 0,
+    capacity: parseInt(t.capacity) || 0
+  }));
 
-    try {
-      await api.createEvent({
+  // 🔑 FIX 1: Grab the correct key ('token', not 'accessToken')
+  const token = localStorage.getItem("token"); 
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+        // 🔑 FIX 2: Manually attach the Bearer token just in case api.createEvent() is failing
+        "Authorization": `Bearer ${token}` 
+      },
+      body: JSON.stringify({
         title,
         description,
         date,
         venue,
         categoryId,
         tiers: formattedTiers
-        // organizerId is no longer sent from the client —
-        // the backend derives it securely from the verified JWT
-      });
+      })
+    });
 
-      alert(`🎉 "${title}" has been successfully broadcast live to VibePass listings!`);
-      navigate("/organizer/dashboard");
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to publish listing.");
 
-    } catch (err) {
-      setError(err.message || "Network pipeline exception occurred during transmission.");
-    } finally {
-      setIsPublishing(false);
-    }
-  };
+    alert(`🎉 "${title}" has been successfully broadcast live!`);
+    navigate("/organizer/dashboard");
+
+  } catch (err) {
+    setError(err.message || "Network pipeline exception occurred.");
+  } finally {
+    setIsPublishing(false);
+  }
+};
 
   return (
     <div style={{ maxWidth: "650px", margin: "40px auto", padding: "40px", background: "white", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
