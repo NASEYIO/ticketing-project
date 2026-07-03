@@ -81,17 +81,25 @@ router.get('/:id', async (req, res, next) => {
  * POST /api/events
  * Securing this route ensures the created event belongs to the authenticated organizer
  */
-router.post('/', async (req, res, next) => {
+/**
+ * CREATE NEW EVENT 
+ * POST /api/events
+ * Securing this route ensures the created event belongs to the authenticated organizer
+ */
+/**
+ * CREATE NEW EVENT 
+ * POST /api/events
+ * Requires a valid organizer token; organizerId is derived from the verified JWT, not client input
+ */
+router.post('/', authenticateToken, requireRole('ORGANIZER'), async (req, res, next) => {
   try {
-    // 1. Pull the organizerId directly from the request body along with the form details
-    const { title, description, venue, date, categoryId, organizerId } = req.body;
+    const { title, description, venue, date, categoryId, tiers } = req.body;
+    const organizerId = req.user.id;
 
-    // 2. Safety check to make sure an organizer ID was provided
-    if (!organizerId) {
-      return res.status(400).json({ error: "Missing organizerId. Cannot create an event without an owner." });
+    if (!Array.isArray(tiers) || tiers.length === 0) {
+      return res.status(400).json({ error: "At least one ticket tier is required." });
     }
 
-    // 3. Insert the new event into PostgreSQL using Prisma
     const newEvent = await prisma.event.create({
       data: {
         title,
@@ -99,8 +107,18 @@ router.post('/', async (req, res, next) => {
         venue,
         date: new Date(date),
         categoryId,
-        organizerId, // Directly linking the event to the seller
-        isApproved: true // Auto-approving for development ease
+        organizerId,
+        isApproved: true, // Auto-approving for development ease
+        tiers: {
+          create: tiers.map(t => ({
+            name: t.name,
+            price: t.price,
+            capacity: t.capacity
+          }))
+        }
+      },
+      include: {
+        tiers: true
       }
     });
 

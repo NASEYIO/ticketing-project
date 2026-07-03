@@ -2,79 +2,49 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
+import { api } from "../services/api";
+
+// Decode the JWT payload stored in localStorage, without any network call
+function getUserFromToken() {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(window.atob(base64));
+  } catch (err) {
+    console.error("Failed to decode stored token:", err);
+    return null;
+  }
+}
 
 function CreateEvent({ user }) {
   const navigate = useNavigate();
-  console.log("👤 CURRENT ACTIVE USER OBJECT CONTEXT (PROP):", user);
 
-  // State hooks executed unconditionally on every single render loop
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [venue, setVenue] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState([]);
-  
-  // 🛠️ Dynamic Backup for Organizer Session Recovery
-  const [resolvedUser, setResolvedUser] = useState(null);
-  
-  // Dynamic Ticket Tiers State (Starts with one default tier)
+
   const [tiers, setTiers] = useState([{ name: "General Admission", price: "", capacity: "" }]);
-  
+
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState("");
 
-  const BACKEND_URL = "https://nanometer-avenge-shadow.ngrok-free.dev";
+  // Fallback: if the `user` prop isn't populated yet, decode it locally from the stored token
+  const currentUserContext = user?.id ? user : getUserFromToken();
 
-  // Fetch Category Records and Resolve Identity Fallbacks on Mount
   useEffect(() => {
-    // 1. Fetch live PostgreSQL categories over the Ngrok tunnel
-    fetch(`${BACKEND_URL}/api/categories`, {
-      headers: { 
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true" // 🛠️ Added to bypass Ngrok warning page
-      }
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Could not fetch categories.");
-        return res.json();
-      })
-      .then((data) => { setCategories(Array.isArray(data) ? data : []); })
+    api.getCategories()
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
       .catch((err) => {
         console.error("Error pulling category objects:", err);
         setCategories([]);
       });
+  }, []);
 
-    // 2. 🛠️ FALLBACK IDENTITY RESOLUTION: Recover the database context via localStorage keys if the prop is blank
-    if (!user || !user.id) {
-      const storedEmail = localStorage.getItem("userEmail");
-      if (storedEmail) {
-        console.log(`🔍 Attempting backend identity recovery for email: ${storedEmail}`);
-        fetch(`${BACKEND_URL}/api/users?email=${storedEmail}`, {
-          headers: { 
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true" // 🛠️ Added to bypass Ngrok warning page here too
-          }
-        })
-          .then((res) => {
-            if (!res.ok) throw new Error("Could not verify session user.");
-            return res.json();
-          })
-          .then((data) => {
-            if (data && data.id) {
-              setResolvedUser(data);
-              console.log("✅ Session user safely recovered from database:", data);
-            }
-          })
-          .catch((err) => console.error("Database user context recovery failed:", err));
-      }
-    }
-  }, [user]);
-
-  // Use the valid prop if it exists, otherwise fall back to the resolved database hook state
-  const currentUserContext = user?.id ? user : resolvedUser;
-
-  // Access Gate Guard Intercept (Safely checking the computed final identity)
   if (!currentUserContext) {
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
@@ -92,18 +62,15 @@ function CreateEvent({ user }) {
     );
   }
 
-  // Handle adding a new ticket class input row (e.g. VIP)
   const handleAddTierRow = () => {
     setTiers([...tiers, { name: "", price: "", capacity: "" }]);
   };
 
-  // Handle removing a ticket tier input row
   const handleRemoveTierRow = (index) => {
-    if (tiers.length === 1) return; // Keep at least one tier
+    if (tiers.length === 1) return;
     setTiers(tiers.filter((_, i) => i !== index));
   };
 
-  // Handle dynamic individual input mutations inside our tier array list structure
   const handleTierChange = (index, field, value) => {
     const updatedTiers = [...tiers];
     updatedTiers[index][field] = value;
@@ -115,7 +82,6 @@ function CreateEvent({ user }) {
     setIsPublishing(true);
     setError("");
 
-    // Validate and format numbers safely for your Prisma model structure types
     const formattedTiers = tiers.map(t => ({
       name: t.name || "General Admission",
       price: parseFloat(t.price) || 0,
@@ -123,25 +89,16 @@ function CreateEvent({ user }) {
     }));
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/events`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true" // 🛠️ Added to bypass Ngrok warning page on submission
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          date,
-          venue,
-          categoryId,
-          organizerId: currentUserContext.id, // Sourced cleanly from our robust context checker
-          tiers: formattedTiers
-        })
+      await api.createEvent({
+        title,
+        description,
+        date,
+        venue,
+        categoryId,
+        tiers: formattedTiers
+        // organizerId is no longer sent from the client —
+        // the backend derives it securely from the verified JWT
       });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to publish listing to database.");
 
       alert(`🎉 "${title}" has been successfully broadcast live to VibePass listings!`);
       navigate("/organizer/dashboard");
@@ -165,7 +122,6 @@ function CreateEvent({ user }) {
       )}
 
       <form onSubmit={handleEventSubmission} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        {/* Core Event Fields */}
         <div>
           <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Event Title</label>
           <input type="text" required placeholder="e.g., Amapiano Sunset Fest or Tech Meetup" value={title} onChange={e => setTitle(e.target.value)} style={{ width: "100%", padding: "12px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem" }} />
@@ -187,13 +143,12 @@ function CreateEvent({ user }) {
           </div>
         </div>
 
-        {/* Dynamic Category Select Dropdown Component */}
         <div>
           <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Event Category</label>
-          <select 
-            required 
-            value={categoryId} 
-            onChange={e => setCategoryId(e.target.value)} 
+          <select
+            required
+            value={categoryId}
+            onChange={e => setCategoryId(e.target.value)}
             style={{ width: "100%", padding: "12px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem", background: "white" }}
           >
             <option value="">-- Choose a Category Index --</option>
@@ -207,7 +162,6 @@ function CreateEvent({ user }) {
 
         <hr style={{ borderColor: "#e2e8f0", margin: "10px 0" }} />
 
-        {/* Dynamic Ticket Allocation Engine */}
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
             <h3 style={{ margin: 0, fontSize: "1.1rem" }}>🎟️ Ticket Tier Structures</h3>
@@ -222,7 +176,7 @@ function CreateEvent({ user }) {
                 <input type="text" required placeholder="Tier Class Name (e.g., VIP)" value={tier.name} onChange={e => handleTierChange(index, "name", e.target.value)} style={{ padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }} />
                 <input type="number" required min="0" placeholder="Price (KES)" value={tier.price} onChange={e => handleTierChange(index, "price", e.target.value)} style={{ padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }} />
                 <input type="number" required min="1" placeholder="Capacity" value={tier.capacity} onChange={e => handleTierChange(index, "capacity", e.target.value)} style={{ padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }} />
-                
+
                 <button type="button" onClick={() => handleRemoveTierRow(index)} disabled={tiers.length === 1} style={{ background: "transparent", color: tiers.length === 1 ? "#cbd5e1" : "#ef4444", border: "none", fontSize: "1.2rem", cursor: tiers.length === 1 ? "not-allowed" : "pointer", padding: "0 5px" }}>
                   🗑️
                 </button>
@@ -231,7 +185,6 @@ function CreateEvent({ user }) {
           </div>
         </div>
 
-        {/* Submit Actions */}
         <Button type="submit" isLoading={isPublishing} size="lg" fullWidth style={{ marginTop: "15px" }}>
           Broadcast Event to Live Marketplace
         </Button>

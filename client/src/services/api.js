@@ -80,7 +80,31 @@ export const api = {
       throw new Error(error.response?.data?.message || "M-Pesa Checkout transmission failed.");
     }
   },
+// Fetch event categories for the dropdown
+  getCategories: async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/categories`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      throw error;
+    }
+  },
 
+  // Create a new event (organizer only)
+  createEvent: async (eventPayload) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/events`,
+        eventPayload,
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Event creation failed:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Failed to publish listing to database.");
+    }
+  },
   // 4. Retrieve real active tickets stored inside PostgreSQL for this specific profile
   getMyTickets: async () => {
     try {
