@@ -2,8 +2,8 @@
 const router = require('express').Router();
 const crypto = require('crypto');
 
-// 🛠️ FIX 1: Point to your actual config folder path and remove local Prisma Client instantiations
-const prisma = require('../config/prisma'); 
+const prisma = require('../config/prisma');
+const { authenticateToken } = require('../middleware/auth');
 
 const MPESA_BASE_URLS = {
   sandbox: 'https://sandbox.safaricom.co.ke',
@@ -165,23 +165,16 @@ const sendMpesaStkPush = async ({ amount, phoneNumber, orderId, eventTitle }) =>
 };
 
 /* =========================================================
-   CHECKOUT ROUTE (JWT Bypassed)
+   CHECKOUT ROUTE (Authenticated)
 ========================================================= */
-// 🛠️ FIX 2: Removed 'authenticateToken' guard parameter completely
-router.post('/checkout', async (req, res, next) => {
+router.post('/checkout', authenticateToken, async (req, res, next) => {
   const { tierId, quantity, phoneNumber } = req.body;
+  const buyerId = req.user.id; // the actual logged-in user, from their verified JWT
 
   let orderId = null;
   let paymentId = null;
 
   try {
-    // 🛠️ FIX 3: Fetch active fallback BUYER from database profile table row records
-    const liveBuyer = await prisma.user.findFirst({ where: { role: 'BUYER' } });
-    if (!liveBuyer) {
-      return res.status(404).json({ error: "No baseline buyer profile registered in database." });
-    }
-    const buyerId = liveBuyer.id;
-
     const phone = normalizeKenyanPhoneNumber(phoneNumber);
 
     const result = await prisma.$transaction(async (tx) => {
@@ -247,17 +240,11 @@ router.post('/checkout', async (req, res, next) => {
 });
 
 /* =========================================================
-   ORGANIZER METRICS ROUTE (JWT Bypassed)
+   ORGANIZER METRICS ROUTE
 ========================================================= */
-router.get('/organizer-metrics', async (req, res, next) => {
+router.get('/organizer-metrics', authenticateToken, async (req, res, next) => {
   try {
-    const liveOrganizer = await prisma.user.findFirst({ where: { role: 'ORGANIZER' } });
-    
-    if (!liveOrganizer) {
-      return res.status(404).json({ error: "No baseline organizer profile registered in database." });
-    }
-
-    const organizerId = liveOrganizer.id;
+    const organizerId = req.user.id;
 
     const events = await prisma.event.findMany({
       where: { organizerId: organizerId },
@@ -314,14 +301,12 @@ router.get('/organizer-metrics', async (req, res, next) => {
     next(err);
   }
 });
-// FILE: server/routes/payments.js
 
 /* =========================================================
-   MPESA WEBHOOK CALLBACK (Fully Aligned to Prisma Schema)
+   MPESA WEBHOOK CALLBACK
    POST /api/payments/callback
 ========================================================= */
 router.post('/callback', async (req, res) => {
-  // Acknowledge receipt to Safaricom immediately
   res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
 
   try {
@@ -333,10 +318,9 @@ router.post('/callback', async (req, res) => {
     console.log(`Processing callback for CheckoutRequestID: ${CheckoutRequestID} with ResultCode: ${ResultCode}`);
 
     if (ResultCode === 0) {
-      // Find the tracking payment
       const trackingPayment = await prisma.payment.findFirst({
         where: { checkoutRequestId: CheckoutRequestID },
-        include: { tier: true } // Sourced to grab eventId instantly
+        include: { tier: true }
       });
 
       if (!trackingPayment) {
@@ -344,7 +328,6 @@ router.post('/callback', async (req, res) => {
         return;
       }
 
-      // 🛠️ Schema Alignment: Enum expects SUCCESSFUL, not COMPLETED
       if (trackingPayment.status === 'SUCCESSFUL') {
         console.log(`ℹ️ Info: Payment ${trackingPayment.id} was already marked SUCCESSFUL.`);
         return;
@@ -363,31 +346,27 @@ router.post('/callback', async (req, res) => {
         return;
       }
 
-      // Execute transaction updates atomically
       await prisma.$transaction(async (tx) => {
-        // 1. Mark payment as SUCCESSFUL and link the Safaricom Receipt string
         await tx.payment.update({
           where: { id: trackingPayment.id },
-          data: { 
-            status: 'SUCCESSFUL', 
+          data: {
+            status: 'SUCCESSFUL',
             mpesaReceiptNumber: mpesaReceiptNumber
           }
         });
 
-        // 2. Mark the parent baseline order record as SUCCESSFUL
         await tx.order.update({
           where: { id: trackingPayment.orderId },
           data: { status: 'SUCCESSFUL' }
         });
 
-        // 3. Loop generate physical tickets filling out all mandatory schema values
         for (let i = 0; i < (trackingPayment.quantity || 1); i++) {
           const uniqueSecret = `TIC-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-          
+
           await tx.ticket.create({
             data: {
-              orderId: trackingPayment.orderId,          // 🛠️ Aligned schema requirement
-              eventId: trackingPayment.tier.eventId,      // 🛠️ Aligned schema requirement
+              orderId: trackingPayment.orderId,
+              eventId: trackingPayment.tier.eventId,
               tierId: trackingPayment.tierId,
               buyerId: parentOrder.buyerId,
               status: 'ACTIVE',
@@ -396,7 +375,7 @@ router.post('/callback', async (req, res) => {
           });
         }
       });
-      
+
       console.log(`✅ Success Core Complete: Generated ${trackingPayment.quantity} active tickets for Buyer ID: ${parentOrder.buyerId}`);
     }
   } catch (error) {
