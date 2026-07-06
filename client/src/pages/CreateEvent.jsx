@@ -102,7 +102,9 @@ function CreateEvent({ user }) {
   const token = localStorage.getItem("token"); 
 
   try {
-    const response = await fetch(`${BACKEND_URL}/api/events`, {
+    // 🎯 FIXED WAY:
+const baseUrl = api.defaults?.baseURL || "https://ticketing-backend-v438.onrender.com";
+const response = await fetch(`${baseUrl}/api/events`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
