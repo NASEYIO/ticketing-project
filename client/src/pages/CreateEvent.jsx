@@ -168,22 +168,21 @@ const response = await fetch(`${baseUrl}/api/events`, {
           </div>
         </div>
 
-        <div>
-          <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Event Category</label>
-          <select
-            required
-            value={categoryId}
-            onChange={e => setCategoryId(e.target.value)}
-            style={{ width: "100%", padding: "12px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem", background: "white" }}
-          >
-            <option value="">-- Choose a Category Index --</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-               {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
+       <div>
+  <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Event Category</label>
+  <select
+    value={categoryId}
+    onChange={e => setCategoryId(e.target.value)}
+    style={{ width: "100%", padding: "12px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem", background: "white" }}
+  >
+    <option value="">-- No Category (Unassigned) --</option>
+    {categories.map((cat) => (
+      <option key={cat.id} value={cat.id}>
+        {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
+      </option>
+    ))}
+  </select>
+</div>
 
         <hr style={{ borderColor: "#e2e8f0", margin: "10px 0" }} />
 
