@@ -36,18 +36,25 @@ function Home() {
     fetchLiveEvents();
   }, []);
 
-  const filteredEvents = events.filter(event => {
+ const filteredEvents = events.filter(event => {
     const titleString = event.title || "";
     const venueString = event.venue || "";
-    const eventCategory = event.category || "All";
+    
+    // Fallback to "all" if missing, and normalize to lowercase
+    const eventCategory = (event.category || "All").toLowerCase();
+    const currentActive = activeCategory.toLowerCase();
 
     const matchesSearch =
       titleString.toLowerCase().includes(search.toLowerCase()) ||
       venueString.toLowerCase().includes(search.toLowerCase());
 
+    // Matches if "All" is selected OR if the strings match cleanly 
+    // (startsWith handles "concert" vs "concerts" variations)
     const matchesCategory =
       activeCategory === "All" ||
-      eventCategory === activeCategory;
+      eventCategory === currentActive ||
+      eventCategory.startsWith(currentActive.replace(/s$/, "")) ||
+      currentActive.startsWith(eventCategory.replace(/s$/, ""));
 
     return matchesSearch && matchesCategory;
   });
