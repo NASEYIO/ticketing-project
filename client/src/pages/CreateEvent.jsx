@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import { api } from "../services/api";
 
-// Decode the JWT payload stored in localStorage, without any network call
 function getUserFromToken() {
   try {
     const token = localStorage.getItem("token");
@@ -27,41 +26,39 @@ function CreateEvent({ user }) {
   const [venue, setVenue] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState([]);
+  const [categoriesUnavailable, setCategoriesUnavailable] = useState(false);
 
   const [tiers, setTiers] = useState([{ name: "General Admission", price: "", capacity: "" }]);
 
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState("");
 
-  // Fallback: if the `user` prop isn't populated yet, decode it locally from the stored token
   const currentUserContext = user?.id ? user : getUserFromToken();
 
- useEffect(() => {
+  useEffect(() => {
     api.getCategories()
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setCategories(data);
         } else {
-          // 💡 Fallback array ensures the dropdown works even if production db is empty
-          setCategories([
-            { id: "concert-fallback", name: "concert" },
-            { id: "sports-fallback", name: "sports" },
-            { id: "conferences-fallback", name: "conferences" },
-            { id: "parties-fallback", name: "parties" }
-          ]);
+          // No real categories exist yet — don't fabricate fake IDs, just flag it
+          setCategoriesUnavailable(true);
         }
       })
       .catch((err) => {
         console.error("Error pulling category objects:", err);
-        // Fallback on total fetch failure
-        setCategories([
-          { id: "concert-fallback", name: "concert" },
-          { id: "sports-fallback", name: "sports" },
-          { id: "conferences-fallback", name: "conferences" },
-          { id: "parties-fallback", name: "parties" }
-        ]);
+        setCategoriesUnavailable(true);
       });
   }, []);
+
+  if (!currentUserContext) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center" }}>
+        <h3>⌛ Connecting Secure Session Context...</h3>
+        <p style={{ color: "#64748b" }}>Please make sure you are logged in to your account on this domain.</p>
+      </div>
+    );
+  }
 
   if (currentUserContext.role !== "ORGANIZER") {
     return (
@@ -86,54 +83,36 @@ function CreateEvent({ user }) {
     setTiers(updatedTiers);
   };
 
- const handleEventSubmission = async (e) => {
-  e.preventDefault();
-  setIsPublishing(true);
-  setError("");
+  const handleEventSubmission = async (e) => {
+    e.preventDefault();
+    setIsPublishing(true);
+    setError("");
 
-  // Safely format tiers
-  const formattedTiers = tiers.map(t => ({
-    name: t.name || "General Admission",
-    price: parseFloat(t.price) || 0,
-    capacity: parseInt(t.capacity) || 0
-  }));
+    const formattedTiers = tiers.map(t => ({
+      name: t.name || "General Admission",
+      price: parseFloat(t.price) || 0,
+      capacity: parseInt(t.capacity) || 0
+    }));
 
-  // 🔑 FIX 1: Grab the correct key ('token', not 'accessToken')
-  const token = localStorage.getItem("token"); 
-
-  try {
-    // 🎯 FIXED WAY:
-const baseUrl = api.defaults?.baseURL || "https://ticketing-backend-v438.onrender.com";
-const response = await fetch(`${baseUrl}/api/events`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true",
-        // 🔑 FIX 2: Manually attach the Bearer token just in case api.createEvent() is failing
-        "Authorization": `Bearer ${token}` 
-      },
-      body: JSON.stringify({
+    try {
+      await api.createEvent({
         title,
         description,
         date,
         venue,
-        categoryId,
+        categoryId: categoryId || null, // never send a fake or empty-string ID
         tiers: formattedTiers
-      })
-    });
+      });
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to publish listing.");
+      alert(`🎉 "${title}" has been successfully broadcast live to VibePass listings!`);
+      navigate("/organizer/dashboard");
 
-    alert(`🎉 "${title}" has been successfully broadcast live!`);
-    navigate("/organizer/dashboard");
-
-  } catch (err) {
-    setError(err.message || "Network pipeline exception occurred.");
-  } finally {
-    setIsPublishing(false);
-  }
-};
+    } catch (err) {
+      setError(err.message || "Network pipeline exception occurred during transmission.");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
 
   return (
     <div style={{ maxWidth: "650px", margin: "40px auto", padding: "40px", background: "white", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
@@ -168,21 +147,26 @@ const response = await fetch(`${baseUrl}/api/events`, {
           </div>
         </div>
 
-       <div>
-  <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Event Category</label>
-  <select
-    value={categoryId}
-    onChange={e => setCategoryId(e.target.value)}
-    style={{ width: "100%", padding: "12px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem", background: "white" }}
-  >
-    <option value="">-- No Category (Unassigned) --</option>
-    {categories.map((cat) => (
-      <option key={cat.id} value={cat.id}>
-        {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
-      </option>
-    ))}
-  </select>
-</div>
+        <div>
+          <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Event Category</label>
+          <select
+            value={categoryId}
+            onChange={e => setCategoryId(e.target.value)}
+            style={{ width: "100%", padding: "12px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem", background: "white" }}
+          >
+            <option value="">-- No Category (Unassigned) --</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
+              </option>
+            ))}
+          </select>
+          {categoriesUnavailable && (
+            <p style={{ color: "#b91c1c", fontSize: "0.8rem", marginTop: "6px" }}>
+              ⚠️ Categories couldn't be loaded. You can still publish without one selected.
+            </p>
+          )}
+        </div>
 
         <hr style={{ borderColor: "#e2e8f0", margin: "10px 0" }} />
 
