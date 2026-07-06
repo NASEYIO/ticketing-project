@@ -49,22 +49,22 @@ const filteredEvents = (events || []).filter(event => {
     const titleString = event.title || "";
     const venueString = event.venue || "";
     
-    // Normalize both the event category field and the active UI category selection
-    const eventCategory = (event.category || "").toLowerCase();
-    const eventCategoryId = (event.categoryId || "").toLowerCase();
-    const currentActive = activeCategory.toLowerCase();
-
     const matchesSearch =
       titleString.toLowerCase().includes(search.toLowerCase()) ||
       venueString.toLowerCase().includes(search.toLowerCase());
 
-    // 💡 Fixes the matching logic so it works seamlessly by ID, text name, or plural variations
+    // 💡 Completely bulletproof fallback: if activeCategory is 'All', immediately match.
+    // Otherwise, check if the string matches loosely or if the category object name matches.
+    if (activeCategory === "All") return matchesSearch;
+
+    const currentActive = activeCategory.toLowerCase();
+    const eventCategoryName = typeof event.category === 'object' 
+      ? (event.category.name || "") 
+      : (event.category || "");
+
     const matchesCategory =
-      activeCategory === "All" ||
-      eventCategory === currentActive ||
-      eventCategoryId === currentActive ||
-      eventCategory.startsWith(currentActive.replace(/s$/, "")) ||
-      currentActive.startsWith(eventCategory.replace(/s$/, ""));
+      eventCategoryName.toLowerCase().includes(currentActive.replace(/s$/, "")) ||
+      currentActive.includes(eventCategoryName.toLowerCase().replace(/s$/, ""));
 
     return matchesSearch && matchesCategory;
   });
