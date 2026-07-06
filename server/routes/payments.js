@@ -3,7 +3,7 @@ const router = require('express').Router();
 const crypto = require('crypto');
 
 const prisma = require('../config/prisma');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const MPESA_BASE_URLS = {
   sandbox: 'https://sandbox.safaricom.co.ke',
@@ -169,7 +169,7 @@ const sendMpesaStkPush = async ({ amount, phoneNumber, orderId, eventTitle }) =>
 ========================================================= */
 router.post('/checkout', authenticateToken, async (req, res, next) => {
   const { tierId, quantity, phoneNumber } = req.body;
-  const buyerId = req.user.id; // the actual logged-in user, from their verified JWT
+  const buyerId = req.user.id;
 
   let orderId = null;
   let paymentId = null;
@@ -240,9 +240,9 @@ router.post('/checkout', authenticateToken, async (req, res, next) => {
 });
 
 /* =========================================================
-   ORGANIZER METRICS ROUTE
+   ORGANIZER METRICS ROUTE (Authenticated, Organizer only)
 ========================================================= */
-router.get('/organizer-metrics', authenticateToken, async (req, res, next) => {
+router.get('/organizer-metrics', authenticateToken, requireRole('ORGANIZER'), async (req, res, next) => {
   try {
     const organizerId = req.user.id;
 

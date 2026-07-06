@@ -13,7 +13,7 @@ router.get('/', async (req, res, next) => {
     const events = await prisma.event.findMany({
       include: {
         tiers: true,
-        category: true // Included category objects in the feed summary list
+        category: true
       },
       orderBy: {
         date: 'asc'
@@ -31,7 +31,6 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/organizer/me', authenticateToken, requireRole('ORGANIZER'), async (req, res, next) => {
   try {
-    // Isolated lookup: matches organizerId to the authenticated organizer's ID
     const myEvents = await prisma.event.findMany({
       where: {
         organizerId: req.user.id
@@ -41,7 +40,7 @@ router.get('/organizer/me', authenticateToken, requireRole('ORGANIZER'), async (
         category: true
       },
       orderBy: {
-        date: 'desc' // Shows newest events first on the dashboard
+        date: 'desc'
       }
     });
 
@@ -62,7 +61,7 @@ router.get('/:id', async (req, res, next) => {
       where: { id: req.params.id },
       include: {
         tiers: true,
-        category: true // Included relational metadata for individual page lookups
+        category: true
       }
     });
 
@@ -77,17 +76,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 /**
- * CREATE NEW EVENT 
- * POST /api/events
- * Securing this route ensures the created event belongs to the authenticated organizer
- */
-/**
- * CREATE NEW EVENT 
- * POST /api/events
- * Securing this route ensures the created event belongs to the authenticated organizer
- */
-/**
- * CREATE NEW EVENT 
+ * CREATE NEW EVENT
  * POST /api/events
  * Requires a valid organizer token; organizerId is derived from the verified JWT, not client input
  */
@@ -106,9 +95,9 @@ router.post('/', authenticateToken, requireRole('ORGANIZER'), async (req, res, n
         description,
         venue,
         date: new Date(date),
-        categoryId,
+        categoryId: categoryId ? categoryId : null,
         organizerId,
-        isApproved: true, // Auto-approving for development ease
+        isApproved: true,
         tiers: {
           create: tiers.map(t => ({
             name: t.name,
@@ -130,14 +119,14 @@ router.post('/', authenticateToken, requireRole('ORGANIZER'), async (req, res, n
 });
 
 /**
- * DELETE PAST OR ERRONEONS EVENT
+ * DELETE PAST OR ERRONEOUS EVENT
  * DELETE /api/events/:id
+ * Requires a valid organizer token; only the event's own organizer may delete it
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', authenticateToken, requireRole('ORGANIZER'), async (req, res, next) => {
   const eventId = req.params.id;
 
   try {
-    // Look up the event first to ensure it exists
     const targetEvent = await prisma.event.findUnique({
       where: { id: eventId },
       include: { tiers: true }
@@ -147,26 +136,25 @@ router.delete('/:id', async (req, res, next) => {
       return res.status(404).json({ error: "The targeted event listing does not exist." });
     }
 
+    if (targetEvent.organizerId !== req.user.id) {
+      return res.status(403).json({ error: "You do not have permission to delete this event." });
+    }
+
     const tierIds = targetEvent.tiers.map(t => t.id);
 
-    // Cascading Delete Transaction: Cleans up dependencies safely in order
     await prisma.$transaction(async (tx) => {
-      // 1. Delete all generated active/used tickets linked to these tiers
       await tx.ticket.deleteMany({
         where: { tierId: { in: tierIds } }
       });
 
-      // 2. Delete payment records associated with these tiers
       await tx.payment.deleteMany({
         where: { tierId: { in: tierIds } }
       });
 
-      // 3. Delete the tiers categories mapped to the event
       await tx.tier.deleteMany({
         where: { eventId: eventId }
       });
 
-      // 4. Finally, safely delete the parent event record
       await tx.event.delete({
         where: { id: eventId }
       });

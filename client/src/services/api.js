@@ -80,6 +80,33 @@ export const api = {
       throw new Error(error.response?.data?.message || "M-Pesa Checkout transmission failed.");
     }
   },
+  // Organizer dashboard metrics
+  getOrganizerMetrics: async () => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/payments/organizer-metrics`,
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching organizer metrics:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Analytics generation error.");
+    }
+  },
+
+  // Delete an event (organizer only)
+  deleteEvent: async (eventId) => {
+    try {
+      const response = await axios.delete(
+        `${BASE_URL}/events/${eventId}`,
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting event:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not delete event.");
+    }
+  },
 // Fetch event categories for the dropdown
   getCategories: async () => {
     try {

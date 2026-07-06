@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Button from "../components/Button";
+import { api } from "../services/api";
 
 function OrganizerDashboard() {
   const [analytics, setAnalytics] = useState(null);
@@ -10,11 +11,7 @@ function OrganizerDashboard() {
 
   const fetchSalesAnalyticsData = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/payments/organizer-metrics", {
-        headers: { "Content-Type": "application/json" }
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Analytics generation error.");
+      const data = await api.getOrganizerMetrics();
       setAnalytics(data);
     } catch (err) {
       setError(err.message || "Failed to parse database records.");
@@ -32,14 +29,7 @@ function OrganizerDashboard() {
     if (!confirmClearance) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/events/${eventId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" }
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Could not delete event.");
-
+      const data = await api.deleteEvent(eventId);
       alert(data.message);
       fetchSalesAnalyticsData(); // Instant data synchronization reload
     } catch (err) {
@@ -55,12 +45,11 @@ function OrganizerDashboard() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
         <div>
           <h1 style={{ margin: 0 }}>Organizer Hub</h1>
-          <p style={{ color: "#64748b" }}>Management Portal (JWT Bypassed)</p>
+          <p style={{ color: "#64748b" }}>Management Portal</p>
         </div>
         <Button as={Link} to="/organizer/create" style={{ textDecoration: "none" }}>+ Create New Event</Button>
       </div>
 
-      {/* Summary Analytics Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", marginBottom: "40px" }}>
         <div style={{ background: "white", padding: "25px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
           <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: "600" }}>REAL GROSS EARNINGS</span>
@@ -105,7 +94,7 @@ function OrganizerDashboard() {
                   </td>
                   <td style={{ padding: "16px", color: "#10b981", fontWeight: "bold" }}>KES {evt.revenue?.toLocaleString() || 0}</td>
                   <td style={{ padding: "16px", textAlign: "center" }}>
-                    <button 
+                    <button
                       onClick={() => handleDeleteEvent(evt.id, evt.title)}
                       style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fee2e2", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "500", transition: "0.2s" }}
                       onMouseOver={(e) => e.target.style.background = "#fee2e2"}
