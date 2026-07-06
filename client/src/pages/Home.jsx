@@ -45,29 +45,29 @@ function Home() {
 
     fetchLiveEvents();
   }, []);
- const filteredEvents = events.filter(event => {
+const filteredEvents = (events || []).filter(event => {
     const titleString = event.title || "";
     const venueString = event.venue || "";
     
-    // Fallback to "all" if missing, and normalize to lowercase
-    const eventCategory = (event.category || "All").toLowerCase();
+    // Normalize both the event category field and the active UI category selection
+    const eventCategory = (event.category || "").toLowerCase();
+    const eventCategoryId = (event.categoryId || "").toLowerCase();
     const currentActive = activeCategory.toLowerCase();
 
     const matchesSearch =
       titleString.toLowerCase().includes(search.toLowerCase()) ||
       venueString.toLowerCase().includes(search.toLowerCase());
 
-    // Matches if "All" is selected OR if the strings match cleanly 
-    // (startsWith handles "concert" vs "concerts" variations)
+    // 💡 Fixes the matching logic so it works seamlessly by ID, text name, or plural variations
     const matchesCategory =
       activeCategory === "All" ||
       eventCategory === currentActive ||
+      eventCategoryId === currentActive ||
       eventCategory.startsWith(currentActive.replace(/s$/, "")) ||
       currentActive.startsWith(eventCategory.replace(/s$/, ""));
 
     return matchesSearch && matchesCategory;
   });
-
   return (
     <div style={{ width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
 
