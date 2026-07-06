@@ -19,11 +19,21 @@ function Home() {
     "Parties"
   ];
 
-  useEffect(() => {
+ useEffect(() => {
     const fetchLiveEvents = async () => {
       try {
-        const data = await api.getEvents();
-        setEvents(data);
+        const responseData = await api.getEvents();
+        
+        // 💡 Checks if responseData is the array, or if the array is nested inside a property
+        if (Array.isArray(responseData)) {
+          setEvents(responseData);
+        } else if (responseData && Array.isArray(responseData.events)) {
+          setEvents(responseData.events);
+        } else if (responseData && Array.isArray(responseData.data)) {
+          setEvents(responseData.data);
+        } else {
+          setEvents([]);
+        }
       } catch (err) {
         setError(
           "Could not load events. Please check if backend server is online."
@@ -35,7 +45,6 @@ function Home() {
 
     fetchLiveEvents();
   }, []);
-
  const filteredEvents = events.filter(event => {
     const titleString = event.title || "";
     const venueString = event.venue || "";
