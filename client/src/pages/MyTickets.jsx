@@ -7,19 +7,10 @@ function MyTickets({ user }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
- useEffect(() => {
+  useEffect(() => {
     const fetchMyTickets = async () => {
       try {
-        // Fetch directly from the un-guarded route that tracks the database buyer
-        const response = await fetch("http://localhost:5000/api/tickets/my-wallet", {
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Could not retrieve your digital ticket cache.");
-        
+        const data = await api.getMyTickets();
         setTickets(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Wallet Fetch Error:", err);
@@ -65,7 +56,7 @@ function MyTickets({ user }) {
               <p style={{ margin: "0 0 15px 0", fontSize: "0.95rem", color: "#475569" }}>
                 <b>Tier:</b> {ticket.tier?.name || "Standard"} — <b>Venue:</b> {ticket.tier?.event?.venue || "Main Gate"}
               </p>
-              
+
               <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "6px", fontFamily: "monospace", fontSize: "0.95rem", textAlign: "center", border: "1px dashed #cbd5e1", color: "#0f172a" }}>
                 🔑 ENTRY CODE: {ticket.secretCode}
               </div>
