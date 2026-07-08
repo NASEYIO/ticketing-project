@@ -136,7 +136,7 @@ export const api = {
   getMyTickets: async () => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/tickets/my-tickets`,
+        `${BASE_URL}/tickets/my-wallet`,
         { headers: getAuthHeader() }
       );
       return response.data;

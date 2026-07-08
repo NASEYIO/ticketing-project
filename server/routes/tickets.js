@@ -1,27 +1,21 @@
 // FILE: src/routes/tickets.js
 const router = require('express').Router();
 const prisma = require('../config/prisma');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
 /**
  * 🎟️ FETCH LIVE TICKETS FOR THE SIGNED-IN BUYER WALLET
- * 🛠️ FIX: Changed endpoint to /my-wallet and bypassed JWT authentication
  * GET /api/tickets/my-wallet
  */
-router.get('/my-wallet', async (req, res, next) => {
+router.get('/my-wallet', authenticateToken, async (req, res, next) => {
   try {
-    // 🛠️ Grab the fallback BUYER from the database records
-    const liveBuyer = await prisma.user.findFirst({ where: { role: 'BUYER' } });
-    if (!liveBuyer) {
-      return res.status(404).json({ error: "No baseline buyer profile registered in database." });
-    }
+    const buyerId = req.user.id; // the actual logged-in user, from their verified JWT
 
-    // Queries database for active items belonging exclusively to our baseline buyer
     const tickets = await prisma.ticket.findMany({
-      where: { 
-        buyerId: liveBuyer.id 
+      where: {
+        buyerId: buyerId
       },
       include: {
-        // 🛠️ FIX: event is nested inside tier in your Prisma setup
         tier: {
           include: {
             event: true
@@ -41,15 +35,14 @@ router.get('/my-wallet', async (req, res, next) => {
 });
 
 /**
- * 🔒 INSTANT EYE-BALL SCAN GATE CHECKPOINT VALIDATOR ENGINE
- * 🛠️ FIX: Bypassed auth middleware for simplified testing checkpoints
+ * 🔒 GATE CHECKPOINT VALIDATOR
+ * Restricted to Organizer/Admin staff only — anyone scanning entry must be authenticated
  * POST /api/tickets/validate-gate
  */
-router.post('/validate-gate', async (req, res, next) => {
+router.post('/validate-gate', authenticateToken, requireRole(['ORGANIZER', 'ADMIN']), async (req, res, next) => {
   const { secretCode } = req.body;
 
   try {
-    // Perform lookups on unique code index structures
     const ticket = await prisma.ticket.findFirst({
       where: { secretCode },
       include: {
@@ -63,10 +56,10 @@ router.post('/validate-gate', async (req, res, next) => {
     });
 
     if (!ticket) {
-      return res.status(404).json({ 
-        valid: false, 
-        code: 'INVALID_TOKEN', 
-        message: 'Security Alert: Ticket signature pattern matching failed. Ticket does not exist.' 
+      return res.status(404).json({
+        valid: false,
+        code: 'INVALID_TOKEN',
+        message: 'Security Alert: Ticket signature pattern matching failed. Ticket does not exist.'
       });
     }
 
@@ -87,7 +80,6 @@ router.post('/validate-gate', async (req, res, next) => {
       });
     }
 
-    // Process pass validation transitions atomically
     await prisma.ticket.update({
       where: { id: ticket.id },
       data: {
