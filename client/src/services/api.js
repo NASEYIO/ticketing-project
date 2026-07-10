@@ -145,4 +145,102 @@ export const api = {
       throw new Error(error.response?.data?.message || "Could not retrieve secure tickets.");
     }
   }
+  // ---------- ADMIN ----------
+,
+  getAdminUsers: async () => {
+    try {
+      const response = await axios.get
+      (`${BASE_URL}/admin/users`, 
+        { headers: getAuthHeader() });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching admin users:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not load users.");
+    }
+  },
+
+  updateUserRole: async (userId, role) => {
+    try {
+      const response = await axios.patch(
+        `${BASE_URL}/admin/users/${userId}/role`,
+        { role },
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating user role:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not update role.");
+    }
+  },
+
+  toggleUserBan: async (userId, isBanned) => {
+    try {
+      const response = await axios.patch(
+        `${BASE_URL}/admin/users/${userId}/ban`,
+        { isBanned },
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating ban status:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not update ban status.");
+    }
+  },
+
+  getPendingEvents: async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/admin/events/pending`, { headers: getAuthHeader() });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching pending events:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not load pending events.");
+    }
+  },
+
+  approveEvent: async (eventId) => {
+    try {
+      const response = await axios.patch(
+        `${BASE_URL}/admin/events/${eventId}/approve`,
+        {},
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error approving event:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not approve event.");
+    }
+  },
+
+  rejectEvent: async (eventId) => {
+    try {
+      const response = await axios.delete(
+        `${BASE_URL}/admin/events/${eventId}/reject`,
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error rejecting event:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not reject event.");
+    }
+  },
+
+  getAdminOrders: async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/admin/orders`, { headers: getAuthHeader() });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching orders:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not load orders.");
+    }
+  },
+
+  getAdminTickets: async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/admin/tickets`, { headers: getAuthHeader() });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching tickets:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not load tickets.");
+    }
+  },
 };

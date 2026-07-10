@@ -109,6 +109,11 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid login credentials provided' });
     }
 
+    // 3.5. Ban Check: refuse to issue a token to a banned account
+    if (user.isBanned) {
+      return res.status(403).json({ error: 'This account has been banned. Contact support.' });
+    }
+
     // 4. Token Generation Phase: Pack core claim attributes inside payload signature framework
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
