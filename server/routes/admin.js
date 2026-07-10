@@ -1,180 +1,161 @@
-// FILE: routes/admin.js
-
-const router = require("express").Router();
-const { PrismaClient } = require("@prisma/client");
-const { authenticateToken, requireRole } = require("../middleware/auth");
-
+// FILE: src/routes/admin.js
+const express = require('express');
+const router = express.Router();
+const { PrismaClient } = require('@prisma/client');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const prisma = new PrismaClient();
 
+// Every route below requires a valid token AND the ADMIN role.
+router.use(authenticateToken, requireRole(['ADMIN']));
 
+// ---------- USERS ----------
 
-/*
-GET ALL ORGANIZERS
-
-/api/admin/organizers
-
-*/
-
-router.get(
-"/organizers",
-authenticateToken,
-requireRole(["ADMIN"]),
-async(req,res,next)=>{
-
-
-try{
-
-
-const organizers = await prisma.user.findMany({
-
-where:{
-role:"ORGANIZER"
-},
-
-
-select:{
-id:true,
-name:true,
-email:true,
-phoneNumber:true,
-createdAt:true
-}
-
-
+// GET /admin/users - list all users
+router.get('/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        isBanned: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
 });
 
+// PATCH /admin/users/:id/role - change a user's role
+router.patch('/users/:id/role', async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body; // expects "BUYER" | "ORGANIZER" | "ADMIN"
 
-res.json(organizers);
+  if (!['BUYER', 'ORGANIZER', 'ADMIN'].includes(role)) {
+    return res.status(400).json({ error: 'Invalid role value' });
+  }
 
-
-
-}catch(error){
-
-next(error);
-
-}
-
-
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: { role },
+    });
+    res.json({ message: `Role updated to ${role}`, user });
+  } catch (err) {
+    console.error(err);
+    res.status(404).json({ error: 'User not found' });
+  }
 });
 
+// PATCH /admin/users/:id/ban - toggle ban status
+router.patch('/users/:id/ban', async (req, res) => {
+  const { id } = req.params;
+  const { isBanned } = req.body; // expects true or false
 
+  if (typeof isBanned !== 'boolean') {
+    return res.status(400).json({ error: 'isBanned must be true or false' });
+  }
 
-
-
-/*
-GET PLATFORM STATISTICS
-
-/api/admin/stats
-
-*/
-
-
-router.get(
-"/stats",
-authenticateToken,
-requireRole(["ADMIN"]),
-async(req,res,next)=>{
-
-
-try{
-
-
-const users = await prisma.user.count();
-
-const events = await prisma.event.count();
-
-const tickets = await prisma.ticket.count();
-
-
-const revenue = await prisma.payment.aggregate({
-
-_sum:{
-amount:true
-},
-
-where:{
-status:"SUCCESSFUL"
-}
-
-
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: { isBanned },
+    });
+    res.json({ message: isBanned ? 'User banned' : 'User unbanned', user });
+  } catch (err) {
+    console.error(err);
+    res.status(404).json({ error: 'User not found' });
+  }
 });
 
+// ---------- EVENTS ----------
 
-res.json({
-
-users,
-events,
-tickets,
-revenue: revenue._sum.amount || 0
-
+// GET /admin/events/pending - events awaiting approval
+router.get('/events/pending', async (req, res) => {
+  try {
+    const events = await prisma.event.findMany({
+      where: { isApproved: false },
+      include: { organizer: { select: { id: true, name: true, email: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(events);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch pending events' });
+  }
 });
 
-
-
-}catch(error){
-
-next(error);
-
-}
-
-
+// PATCH /admin/events/:id/approve
+router.patch('/events/:id/approve', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const event = await prisma.event.update({
+      where: { id },
+      data: { isApproved: true },
+    });
+    res.json({ message: 'Event approved', event });
+  } catch (err) {
+    console.error(err);
+    res.status(404).json({ error: 'Event not found' });
+  }
 });
 
-
-
-
-
-/*
-APPROVE EVENT
-
-/api/admin/events/:id/approve
-
-*/
-
-
-router.patch(
-"/events/:id/approve",
-authenticateToken,
-requireRole(["ADMIN"]),
-async(req,res,next)=>{
-
-
-try{
-
-
-const event = await prisma.event.update({
-
-where:{
-id:req.params.id
-},
-
-data:{
-isApproved:true
-}
-
+// DELETE /admin/events/:id/reject - reject (delete) an unapproved event
+router.delete('/events/:id/reject', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.event.delete({ where: { id } });
+    res.json({ message: 'Event rejected and removed' });
+  } catch (err) {
+    console.error(err);
+    res.status(404).json({ error: 'Event not found' });
+  }
 });
 
+// ---------- ORDERS ----------
 
-res.json({
-
-message:"Event approved",
-event
-
+// GET /admin/orders - all orders across all buyers
+router.get('/orders', async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        buyer: { select: { id: true, name: true, email: true } },
+        payments: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(orders);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
 });
 
+// ---------- TICKETS ----------
 
-
-}catch(error){
-
-next(error);
-
-}
-
-
+// GET /admin/tickets - all tickets across all events
+router.get('/tickets', async (req, res) => {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      include: {
+        event: { select: { id: true, title: true } },
+        tier: { select: { id: true, name: true } },
+        buyer: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(tickets);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch tickets' });
+  }
 });
-
-
-
 
 module.exports = router;
