@@ -254,4 +254,13 @@ deleteUser: async (userId) => {
       throw new Error(error.response?.data?.error || "Could not load tickets.");
     }
   },
+  getUserDetail: async (userId) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/admin/users/${userId}`, { headers: getAuthHeader() });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user detail:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not load user details.");
+    }
+  },
 };

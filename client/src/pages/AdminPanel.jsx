@@ -56,6 +56,7 @@ function UsersTab() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -80,7 +81,7 @@ function UsersTab() {
     }
   };
 
- const handleBanToggle = async (userId, isBanned) => {
+  const handleBanToggle = async (userId, isBanned) => {
     try {
       await api.toggleUserBan(userId, !isBanned);
       load();
@@ -106,8 +107,10 @@ function UsersTab() {
     <Panel title="Users">
       {users.length === 0 ? <p>No users found.</p> : users.map((u) => (
         <Row key={u.id}>
-          <div>
-            <h4 style={{ margin: 0 }}>{u.name} {u.isBanned && <span style={{ color: "#dc2626", fontSize: "0.75rem" }}>(BANNED)</span>}</h4>
+          <div style={{ cursor: "pointer" }} onClick={() => setSelectedUserId(u.id)}>
+            <h4 style={{ margin: 0, color: "#2563eb" }}>
+              {u.name} {u.isBanned && <span style={{ color: "#dc2626", fontSize: "0.75rem" }}>(BANNED)</span>}
+            </h4>
             <p style={{ fontSize: "0.85rem", color: "#666", margin: "4px 0" }}>{u.email}</p>
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -126,15 +129,115 @@ function UsersTab() {
               onClick={() => handleBanToggle(u.id, u.isBanned)}
             >
               {u.isBanned ? "Unban" : "Ban"}
-
             </Button>
-             <Button variant="danger" size="sm" onClick={() => handleDelete(u.id, u.name)}>
+            <Button variant="danger" size="sm" onClick={() => handleDelete(u.id, u.name)}>
               Delete
             </Button>
           </div>
         </Row>
       ))}
+
+      {selectedUserId && (
+        <UserDetailModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} />
+      )}
     </Panel>
+  );
+}
+
+// ---------- USER DETAIL MODAL ----------
+function UserDetailModal({ userId, onClose }) {
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await api.getUserDetail(userId);
+        setDetail(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId]);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+        background: "rgba(15, 23, 42, 0.5)", display: "flex",
+        alignItems: "center", justifyContent: "center", zIndex: 100, padding: "20px",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "white", borderRadius: "12px", padding: "30px",
+          maxWidth: "600px", width: "100%", maxHeight: "80vh", overflowY: "auto",
+        }}
+      >
+        {loading && <p>Loading details...</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
+
+        {detail && (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+              <h3 style={{ margin: 0 }}>{detail.name}</h3>
+              <Button variant="secondary" size="sm" onClick={onClose}>Close</Button>
+            </div>
+
+            <div style={{ marginTop: "15px", fontSize: "0.9rem", color: "#334155", lineHeight: "1.6" }}>
+              <p><strong>Email:</strong> {detail.email}</p>
+              <p><strong>Phone:</strong> {detail.phoneNumber}</p>
+              <p><strong>Role:</strong> {detail.role}</p>
+              <p><strong>Status:</strong> {detail.isBanned ? "🚫 Banned" : "✅ Active"}</p>
+              <p><strong>Joined:</strong> {new Date(detail.createdAt).toLocaleString()}</p>
+              <p><strong>Last updated:</strong> {new Date(detail.updatedAt).toLocaleString()}</p>
+            </div>
+
+            {detail.events?.length > 0 && (
+              <div style={{ marginTop: "20px" }}>
+                <h4>Events Organized ({detail.events.length})</h4>
+                {detail.events.map((ev) => (
+                  <div key={ev.id} style={{ padding: "10px 0", borderBottom: "1px solid #eee", fontSize: "0.9rem" }}>
+                    {ev.title} — {ev.venue} · {new Date(ev.date).toLocaleDateString()} · {ev.isApproved ? "Approved" : "Pending"}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {detail.orders?.length > 0 && (
+              <div style={{ marginTop: "20px" }}>
+                <h4>Orders ({detail.orders.length})</h4>
+                {detail.orders.map((o) => (
+                  <div key={o.id} style={{ padding: "10px 0", borderBottom: "1px solid #eee", fontSize: "0.9rem" }}>
+                    KES {o.totalAmount} · {o.status} · {new Date(o.createdAt).toLocaleDateString()}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {detail.tickets?.length > 0 && (
+              <div style={{ marginTop: "20px" }}>
+                <h4>Tickets ({detail.tickets.length})</h4>
+                {detail.tickets.map((t) => (
+                  <div key={t.id} style={{ padding: "10px 0", borderBottom: "1px solid #eee", fontSize: "0.9rem" }}>
+                    {t.event?.title} — {t.tier?.name} · {t.status}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {detail.events?.length === 0 && detail.orders?.length === 0 && detail.tickets?.length === 0 && (
+              <p style={{ marginTop: "20px", color: "#64748b" }}>No activity yet.</p>
+            )}
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 

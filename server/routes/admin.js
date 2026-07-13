@@ -192,6 +192,49 @@ router.get('/tickets', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch tickets' });
   }
+  // GET /admin/users/:id - full detail for a single user
+router.get('/users/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        isBanned: true,
+        createdAt: true,
+        updatedAt: true,
+        events: {
+          select: { id: true, title: true, venue: true, date: true, isApproved: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        },
+        tickets: {
+          select: {
+            id: true,
+            status: true,
+            createdAt: true,
+            event: { select: { title: true } },
+            tier: { select: { name: true, price: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        orders: {
+          select: { id: true, totalAmount: true, status: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch user details' });
+  }
+});
 });
 
 module.exports = router;
