@@ -131,6 +131,7 @@ const filteredEvents = (events || []).filter(event => {
           width: "100%",
           paddingBottom: "8px"
         }}
+        
       >
         {categories.map(cat => (
           <Button

@@ -75,11 +75,23 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-/**
- * CREATE NEW EVENT
- * POST /api/events
- * Requires a valid organizer token; organizerId is derived from the verified JWT, not client input
- */
+router.get('/', async (req, res, next) => {
+  try {
+    const events = await prisma.event.findMany({
+      where: { isApproved: true },   // 👈 add this
+      include: {
+        tiers: true,
+        category: true
+      },
+      orderBy: {
+        date: 'asc'
+      }
+    });
+    return res.status(200).json(events);
+  } catch (error) {
+    next(error);
+  }
+});
 router.post('/', authenticateToken, requireRole('ORGANIZER'), async (req, res, next) => {
   try {
     const { title, description, venue, date, categoryId, tiers } = req.body;
@@ -97,7 +109,7 @@ router.post('/', authenticateToken, requireRole('ORGANIZER'), async (req, res, n
         date: new Date(date),
         categoryId: categoryId ? categoryId : null,
         organizerId,
-        isApproved: true,
+        isApproved: false,
         tiers: {
           create: tiers.map(t => ({
             name: t.name,

@@ -1,4 +1,4 @@
-// FILE: src/routes/admin.js
+// FILE: routes/admin.js
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
@@ -36,7 +36,7 @@ router.get('/users', async (req, res) => {
 // PATCH /admin/users/:id/role - change a user's role
 router.patch('/users/:id/role', async (req, res) => {
   const { id } = req.params;
-  const { role } = req.body; // expects "BUYER" | "ORGANIZER" | "ADMIN"
+  const { role } = req.body;
 
   if (!['BUYER', 'ORGANIZER', 'ADMIN'].includes(role)) {
     return res.status(400).json({ error: 'Invalid role value' });
@@ -57,7 +57,7 @@ router.patch('/users/:id/role', async (req, res) => {
 // PATCH /admin/users/:id/ban - toggle ban status
 router.patch('/users/:id/ban', async (req, res) => {
   const { id } = req.params;
-  const { isBanned } = req.body; // expects true or false
+  const { isBanned } = req.body;
 
   if (typeof isBanned !== 'boolean') {
     return res.status(400).json({ error: 'isBanned must be true or false' });
@@ -72,6 +72,42 @@ router.patch('/users/:id/ban', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(404).json({ error: 'User not found' });
+  }
+});
+
+// DELETE /admin/users/:id - permanently delete a user and their related data
+router.delete('/users/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const events = await tx.event.findMany({ where: { organizerId: id }, select: { id: true } });
+      const eventIds = events.map(e => e.id);
+
+      const tiers = await tx.tier.findMany({ where: { eventId: { in: eventIds } }, select: { id: true } });
+      const tierIds = tiers.map(t => t.id);
+
+      const orders = await tx.order.findMany({ where: { buyerId: id }, select: { id: true } });
+      const orderIds = orders.map(o => o.id);
+
+      await tx.ticket.deleteMany({
+        where: { OR: [{ eventId: { in: eventIds } }, { tierId: { in: tierIds } }, { buyerId: id }] }
+      });
+
+      await tx.payment.deleteMany({
+        where: { OR: [{ tierId: { in: tierIds } }, { orderId: { in: orderIds } }] }
+      });
+
+      await tx.order.deleteMany({ where: { buyerId: id } });
+      await tx.tier.deleteMany({ where: { eventId: { in: eventIds } } });
+      await tx.event.deleteMany({ where: { organizerId: id } });
+      await tx.user.delete({ where: { id } });
+    });
+
+    res.json({ message: 'User and all associated data permanently deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(404).json({ error: 'User not found or could not be deleted' });
   }
 });
 
