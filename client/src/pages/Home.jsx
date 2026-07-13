@@ -58,7 +58,7 @@ const filteredEvents = (events || []).filter(event => {
     if (activeCategory === "All") return matchesSearch;
 
     const currentActive = activeCategory.toLowerCase();
-    const eventCategoryName = typeof event.category === 'object' 
+    const eventCategoryName = event.category && typeof event.category === 'object' 
       ? (event.category.name || "") 
       : (event.category || "");
 
