@@ -87,6 +87,15 @@ function UsersTab() {
     } catch (err) {
       alert(err.message);
     }
+    const handleDelete = async (userId, name) => {
+    if (!confirm(`Permanently delete ${name}? This cannot be undone.`)) return;
+    try {
+      await api.deleteUser(userId);
+      load();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
   };
 
   if (loading) return <p>Loading users...</p>;
@@ -116,6 +125,10 @@ function UsersTab() {
               onClick={() => handleBanToggle(u.id, u.isBanned)}
             >
               {u.isBanned ? "Unban" : "Ban"}
+
+            </Button>
+               <Button variant="danger" size="sm" onClick={() => handleDelete(u.id, u.name)}>
+              Delete
             </Button>
           </div>
         </Row>

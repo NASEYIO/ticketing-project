@@ -233,7 +233,18 @@ export const api = {
       throw new Error(error.response?.data?.error || "Could not load orders.");
     }
   },
-
+deleteUser: async (userId) => {
+    try {
+      const response = await axios.delete(
+        `${BASE_URL}/admin/users/${userId}`,
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting user:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not delete user.");
+    }
+  },
   getAdminTickets: async () => {
     try {
       const response = await axios.get(`${BASE_URL}/admin/tickets`, { headers: getAuthHeader() });
