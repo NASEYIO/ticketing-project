@@ -192,6 +192,7 @@ router.get('/tickets', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch tickets' });
   }
+  });
   // GET /admin/users/:id - full detail for a single user
 router.get('/users/:id', async (req, res) => {
   const { id } = req.params;
@@ -234,7 +235,6 @@ router.get('/users/:id', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch user details' });
   }
-});
 });
 
 module.exports = router;
