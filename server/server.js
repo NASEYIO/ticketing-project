@@ -75,6 +75,14 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Production Core Routing Engine active across network port [${PORT}]`);
-});
+
+// Only start listening on a real port when this file is run directly
+// (e.g. `node server.js`). When Jest imports this file for testing,
+// it just gets the configured app, without binding to a port.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Production Core Routing Engine active across network port [${PORT}]`);
+  });
+}
+
+module.exports = app;

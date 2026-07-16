@@ -3,6 +3,7 @@ const router = require('express').Router();
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const prisma = require('../config/prisma');
+const { calculateAvailability } = require('../utils/ticketAvailability');
 
 /**
  * GET ALL APPROVED PUBLIC EVENTS
@@ -70,6 +71,36 @@ router.get('/:id', async (req, res, next) => {
     }
 
     return res.status(200).json(event);
+  } catch (error) {
+    next(error);
+  }
+});
+/**
+ * GET TICKET AVAILABILITY FOR AN EVENT
+ * GET /api/events/:id/availability
+ * Returns remaining ticket count per tier, using the tested
+ * calculateAvailability() utility.
+ */
+router.get('/:id/availability', async (req, res, next) => {
+  try {
+    const event = await prisma.event.findUnique({
+      where: { id: req.params.id },
+      include: { tiers: true },
+    });
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    const availability = event.tiers.map((tier) => ({
+      tierId: tier.id,
+      name: tier.name,
+      capacity: tier.capacity,
+      sold: tier.sold,
+      remaining: calculateAvailability(tier),
+    }));
+
+    return res.status(200).json({ eventId: event.id, tiers: availability });
   } catch (error) {
     next(error);
   }
