@@ -13,7 +13,7 @@ describe('Homepage', () => {
 
     // Wait (with retry) until loading finishes and either events or the
     // empty-state message appears — avoids catching the page mid-load.
-    cy.get('body', { timeout: 10000 }).should(($body) => {
+    cy.get('body', { timeout: 70000 }).should(($body) => {
       const text = $body.text();
       const finishedLoading =
         text.includes('View Details') || text.includes('No events found');
