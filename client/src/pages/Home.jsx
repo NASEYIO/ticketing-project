@@ -119,6 +119,25 @@ const filteredEvents = (events || []).filter(event => {
             boxSizing: "border-box", /* CRUCIAL: Keeps search input completely inside blue area */
           }}
         />
+
+        {/* Download App Button */}
+        
+          href="/VibePass.apk"
+          download
+          style={{
+            display: "inline-block",
+            marginTop: "16px",
+            padding: "12px 20px",
+            background: "white",
+            color: "#2563eb",
+            borderRadius: "10px",
+            fontWeight: "700",
+            fontSize: "0.9rem",
+            textDecoration: "none",
+          }}
+        
+          📱 Download Android App
+        
       </div>
 
       {/* Category List */}
