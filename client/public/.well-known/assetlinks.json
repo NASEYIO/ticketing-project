@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.vibepass.app",
+    "sha256_cert_fingerprints": ["0D:BC:D0:E8:3E:1B:67:5A:9B:48:4D:B4:11:A0:FA:84:93:DE:2A:77:33:A2:78:1D:3B:89:EB:EB:51:11:B9:97"]
+  }
+}]
