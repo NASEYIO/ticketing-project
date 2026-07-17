@@ -1,4 +1,4 @@
-/// FILE: src/pages/Home.jsx
+﻿/// FILE: src/pages/Home.jsx
 import { useState, useEffect } from "react";
 import EventCard from "../components/EventCard";
 import { api } from "../services/api";
@@ -119,24 +119,14 @@ const filteredEvents = (events || []).filter(event => {
             boxSizing: "border-box", /* CRUCIAL: Keeps search input completely inside blue area */
           }}
         />
+<a href="/VibePass.apk" download style={{display:"inline-block",marginTop:"16px",padding:"12px 20px",background:"white",color:"#2563eb",borderRadius:"10px",fontWeight:"700",fontSize:"0.9rem",textDecoration:"none"}}>Download Android App</a>
 
-        {/* Download App Button */}
-        
-          href="/VibePass.apk"
-          download
-          style={{
-            display: "inline-block",
-            marginTop: "16px",
-            padding: "12px 20px",
-            background: "white",
-            color: "#2563eb",
-            borderRadius: "10px",
-            fontWeight: "700",
-            fontSize: "0.9rem",
-            textDecoration: "none",
-          }}
-        
-          📱 Download Android App
+
+
+
+
+
+
         
       </div>
 
