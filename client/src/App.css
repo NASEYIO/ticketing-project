@@ -182,3 +182,35 @@
     border-right-color: var(--border);
   }
 }
+/* Mobile: shrink everything proportionally instead of wrapping or cutting off */
+@media (max-width: 480px) {
+  .brand-logo {
+    font-size: 0.95rem !important;
+  }
+
+  .location-badge {
+    display: none;
+  }
+
+  .main-nav {
+    gap: 4px !important;
+  }
+
+  .nav-btn {
+    padding: 6px 10px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .nav-link {
+    font-size: 0.7rem !important;
+  }
+
+  .category-pill {
+    padding: 5px 12px !important;
+    font-size: 0.75rem !important;
+  }
+
+  h1 {
+    font-size: 1.6rem !important;
+  }
+}

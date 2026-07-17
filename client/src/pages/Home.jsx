@@ -127,7 +127,7 @@ const filteredEvents = (events || []).filter(event => {
 
 
 
-        
+
       </div>
 
       {/* Category List */}
@@ -148,6 +148,7 @@ const filteredEvents = (events || []).filter(event => {
             onClick={() => setActiveCategory(cat)}
             variant={activeCategory === cat ? "primary" : "secondary"}
             size="sm"
+             className="category-pill"
             style={{
               borderRadius: "24px",
               whiteSpace: "nowrap"

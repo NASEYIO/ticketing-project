@@ -63,7 +63,7 @@ function App() {
         }}
       >
         {/* HEADER: Stays at top */}
-        <header
+       <header
           style={{
             background: "#ffffff",
             padding: "12px 15px", 
@@ -79,9 +79,10 @@ function App() {
             boxSizing: "border-box"
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className="brand-block" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Link
               to="/"
+              className="brand-logo"
               style={{
                 fontSize: "1.2rem", 
                 fontWeight: "800",
@@ -93,6 +94,7 @@ function App() {
               🎫 VibePass
             </Link>
             <span
+              className="location-badge"
               style={{
                 background: "#f1f5f9",
                 padding: "4px 8px",
@@ -106,13 +108,13 @@ function App() {
             </span>
           </div>
 
-          {/* Nav Container: Behaves like a swipable horizontal row on small screens */}
           <nav
+            className="main-nav"
             style={{
               display: "flex",
               gap: "8px",
               alignItems: "center",
-              overflowX: "auto",        /* Allows buttons to scroll side-to-side seamlessly */
+              overflowX: "auto",
               maxWidth: "100%",
               paddingBottom: "4px",
               WebkitOverflowScrolling: "touch"
@@ -123,6 +125,7 @@ function App() {
               to="/"
               variant="secondary"
               size="sm"
+              className="nav-btn"
               style={{ textDecoration: "none", whiteSpace: "nowrap" }}
             >
               Explore
@@ -132,6 +135,7 @@ function App() {
               <>
                 <Link
                   to="/Login"
+                  className="nav-link"
                   style={{
                     color: "#475569",
                     textDecoration: "none",
@@ -144,6 +148,7 @@ function App() {
                 </Link>
                 <Link
                   to="/Login"
+                  className="nav-link"
                   style={{
                     color: "#475569",
                     textDecoration: "none",
@@ -158,6 +163,7 @@ function App() {
                   as={Link}
                   to="/register"
                   size="sm"
+                  className="nav-btn"
                   style={{ textDecoration: "none", whiteSpace: "nowrap" }}
                 >
                   Sign Up
@@ -169,6 +175,7 @@ function App() {
               <>
                 <Link
                   to="/buyer/tickets"
+                  className="nav-link"
                   style={{
                     color: "#2563eb",
                     textDecoration: "none",
@@ -179,7 +186,7 @@ function App() {
                 >
                   🎟️ Tickets
                 </Link>
-                <Button onClick={logout} variant="secondary" size="sm" style={{ whiteSpace: "nowrap" }}>
+                <Button onClick={logout} variant="secondary" size="sm" className="nav-btn" style={{ whiteSpace: "nowrap" }}>
                   Logout
                 </Button>
               </>
@@ -192,6 +199,7 @@ function App() {
                   to="/organizer/dashboard"
                   variant="secondary"
                   size="sm"
+                  className="nav-btn"
                   style={{
                     background: "#f59e0b",
                     color: "#1e293b",
@@ -202,7 +210,7 @@ function App() {
                 >
                   Dashboard
                 </Button>
-                <Button onClick={logout} variant="secondary" size="sm" style={{ whiteSpace: "nowrap" }}>
+                <Button onClick={logout} variant="secondary" size="sm" className="nav-btn" style={{ whiteSpace: "nowrap" }}>
                   Logout
                 </Button>
               </>
@@ -215,11 +223,12 @@ function App() {
                   to="/admin"
                   variant="danger"
                   size="sm"
+                  className="nav-btn"
                   style={{ textDecoration: "none", whiteSpace: "nowrap" }}
                 >
                   Admin Panel
                 </Button>
-                <Button onClick={logout} variant="secondary" size="sm" style={{ whiteSpace: "nowrap" }}>
+                <Button onClick={logout} variant="secondary" size="sm" className="nav-btn" style={{ whiteSpace: "nowrap" }}>
                   Logout
                 </Button>
               </>
