@@ -58,6 +58,9 @@ model Event {
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id])
 
+ photoUrls   String[] @default([])   // 👈 add this
+  videoUrl    String?                  // 👈 add this
+  
   // Relations
   organizer   User     @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
   tiers       Tier[]

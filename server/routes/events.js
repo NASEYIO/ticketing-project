@@ -125,7 +125,7 @@ router.get('/', async (req, res, next) => {
 });
 router.post('/', authenticateToken, requireRole('ORGANIZER'), async (req, res, next) => {
   try {
-    const { title, description, venue, date, categoryId, tiers } = req.body;
+    const { title, description, venue, date, categoryId, tiers, photoUrls, videoUrl } = req.body;
     const organizerId = req.user.id;
 
     if (!Array.isArray(tiers) || tiers.length === 0) {
@@ -141,6 +141,8 @@ router.post('/', authenticateToken, requireRole('ORGANIZER'), async (req, res, n
         categoryId: categoryId ? categoryId : null,
         organizerId,
         isApproved: false,
+        photoUrls: Array.isArray(photoUrls) ? photoUrls : [],
+        videoUrl: videoUrl || null,
         tiers: {
           create: tiers.map(t => ({
             name: t.name,
@@ -160,6 +162,7 @@ router.post('/', authenticateToken, requireRole('ORGANIZER'), async (req, res, n
     next(error);
   }
 });
+
 
 /**
  * DELETE PAST OR ERRONEOUS EVENT

@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 import { api } from "../services/api";
 
+const CLOUDINARY_CLOUD_NAME = "fojwosyf";
+const CLOUDINARY_UPLOAD_PRESET = "vibepass_events";
+
 function getUserFromToken() {
   try {
     const token = localStorage.getItem("token");
@@ -15,6 +18,26 @@ function getUserFromToken() {
     console.error("Failed to decode stored token:", err);
     return null;
   }
+}
+
+// Uploads a single file directly to Cloudinary from the browser.
+// resourceType is "image" or "video" — Cloudinary uses separate endpoints for each.
+async function uploadToCloudinary(file, resourceType) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
+    { method: "POST", body: formData }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to upload ${resourceType}`);
+  }
+
+  const data = await response.json();
+  return data.secure_url;
 }
 
 function CreateEvent({ user }) {
@@ -30,6 +53,10 @@ function CreateEvent({ user }) {
 
   const [tiers, setTiers] = useState([{ name: "General Admission", price: "", capacity: "" }]);
 
+  const [photoFiles, setPhotoFiles] = useState([]);
+  const [videoFile, setVideoFile] = useState(null);
+  const [uploadStatus, setUploadStatus] = useState("");
+
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState("");
 
@@ -41,7 +68,6 @@ function CreateEvent({ user }) {
         if (Array.isArray(data) && data.length > 0) {
           setCategories(data);
         } else {
-          // No real categories exist yet — don't fabricate fake IDs, just flag it
           setCategoriesUnavailable(true);
         }
       })
@@ -83,10 +109,25 @@ function CreateEvent({ user }) {
     setTiers(updatedTiers);
   };
 
+  const handlePhotoSelection = (e) => {
+    const files = Array.from(e.target.files || []);
+    setPhotoFiles((prev) => [...prev, ...files]);
+  };
+
+  const handleRemovePhoto = (index) => {
+    setPhotoFiles(photoFiles.filter((_, i) => i !== index));
+  };
+
+  const handleVideoSelection = (e) => {
+    const file = e.target.files?.[0] || null;
+    setVideoFile(file);
+  };
+
   const handleEventSubmission = async (e) => {
     e.preventDefault();
     setIsPublishing(true);
     setError("");
+    setUploadStatus("");
 
     const formattedTiers = tiers.map(t => ({
       name: t.name || "General Admission",
@@ -95,13 +136,32 @@ function CreateEvent({ user }) {
     }));
 
     try {
+      let photoUrls = [];
+      let videoUrl = null;
+
+      if (photoFiles.length > 0) {
+        setUploadStatus(`Uploading ${photoFiles.length} photo(s)...`);
+        photoUrls = await Promise.all(
+          photoFiles.map((file) => uploadToCloudinary(file, "image"))
+        );
+      }
+
+      if (videoFile) {
+        setUploadStatus("Uploading video...");
+        videoUrl = await uploadToCloudinary(videoFile, "video");
+      }
+
+      setUploadStatus("Publishing event...");
+
       await api.createEvent({
         title,
         description,
         date,
         venue,
-        categoryId: categoryId || null, // never send a fake or empty-string ID
-        tiers: formattedTiers
+        categoryId: categoryId || null,
+        tiers: formattedTiers,
+        photoUrls,
+        videoUrl
       });
 
       alert(`🎉 "${title}" has been successfully broadcast live to VibePass listings!`);
@@ -111,6 +171,7 @@ function CreateEvent({ user }) {
       setError(err.message || "Network pipeline exception occurred during transmission.");
     } finally {
       setIsPublishing(false);
+      setUploadStatus("");
     }
   };
 
@@ -171,6 +232,63 @@ function CreateEvent({ user }) {
         <hr style={{ borderColor: "#e2e8f0", margin: "10px 0" }} />
 
         <div>
+          <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>
+            📷 Event Photos ({photoFiles.length})
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handlePhotoSelection}
+            style={{ width: "100%", padding: "10px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }}
+          />
+          {photoFiles.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "12px" }}>
+              {photoFiles.map((file, index) => (
+                <div key={index} style={{ position: "relative" }}>
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={`Preview ${index}`}
+                    style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "8px", border: "1px solid #e2e8f0" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePhoto(index)}
+                    style={{
+                      position: "absolute", top: "-6px", right: "-6px",
+                      background: "#ef4444", color: "white", border: "none",
+                      borderRadius: "50%", width: "20px", height: "20px",
+                      cursor: "pointer", fontSize: "0.7rem", lineHeight: "1"
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>
+            🎬 Event Video (optional)
+          </label>
+          <input
+            type="file"
+            accept="video/*"
+            onChange={handleVideoSelection}
+            style={{ width: "100%", padding: "10px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.9rem" }}
+          />
+          {videoFile && (
+            <p style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "6px" }}>
+              Selected: {videoFile.name}
+            </p>
+          )}
+        </div>
+
+        <hr style={{ borderColor: "#e2e8f0", margin: "10px 0" }} />
+
+        <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
             <h3 style={{ margin: 0, fontSize: "1.1rem" }}>🎟️ Ticket Tier Structures</h3>
             <button type="button" onClick={handleAddTierRow} style={{ background: "#eff6ff", color: "#2563eb", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "0.85rem" }}>
@@ -192,6 +310,12 @@ function CreateEvent({ user }) {
             ))}
           </div>
         </div>
+
+        {uploadStatus && (
+          <p style={{ color: "#2563eb", fontSize: "0.9rem", fontWeight: "600", textAlign: "center" }}>
+            {uploadStatus}
+          </p>
+        )}
 
         <Button type="submit" isLoading={isPublishing} size="lg" fullWidth style={{ marginTop: "15px" }}>
           Broadcast Event to Live Marketplace
