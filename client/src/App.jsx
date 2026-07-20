@@ -39,13 +39,16 @@ function App() {
     }
   }, []);
 
-  const logout = () => {
+ const logout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (!confirmLogout) return;
+
     localStorage.removeItem("token");
     setUser(null);
     setCart(null);
     alert("Logged out successfully");
   };
-
+  
   return (
     <Router>
       {/* Main wrapper: Enforces strict screen boundaries on mobile devices */}
