@@ -163,7 +163,100 @@ router.post('/', authenticateToken, requireRole('ORGANIZER'), async (req, res, n
   }
 });
 
+/**
+ * UPDATE AN EXISTING EVENT
+ * PATCH /api/events/:id
+ * Only the event's own organizer may edit it. Tiers with tickets already
+ * sold cannot be removed, to protect existing ticket/order records.
+ */
+router.patch('/:id', authenticateToken, requireRole('ORGANIZER'), async (req, res, next) => {
+  const eventId = req.params.id;
 
+  try {
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: { tiers: true },
+    });
+
+    if (!existingEvent) {
+      return res.status(404).json({ error: "Event not found." });
+    }
+
+    if (existingEvent.organizerId !== req.user.id) {
+      return res.status(403).json({ error: "You do not have permission to edit this event." });
+    }
+
+    const { title, description, venue, date, categoryId, photoUrls, videoUrl, tiers } = req.body;
+
+    if (!Array.isArray(tiers) || tiers.length === 0) {
+      return res.status(400).json({ error: "At least one ticket tier is required." });
+    }
+
+    const submittedIds = tiers.filter(t => t.id).map(t => t.id);
+    const tiersToRemove = existingEvent.tiers.filter(t => !submittedIds.includes(t.id));
+    const blockedRemovals = tiersToRemove.filter(t => t.sold > 0);
+
+    if (blockedRemovals.length > 0) {
+      return res.status(400).json({
+        error: `Cannot remove tier(s) with tickets already sold: ${blockedRemovals.map(t => t.name).join(', ')}`,
+      });
+    }
+
+    const updatedEvent = await prisma.$transaction(async (tx) => {
+      await tx.event.update({
+        where: { id: eventId },
+        data: {
+          title,
+          description,
+          venue,
+          date: new Date(date),
+          categoryId: categoryId || null,
+          photoUrls: Array.isArray(photoUrls) ? photoUrls : [],
+          videoUrl: videoUrl || null,
+        },
+      });
+
+      const safeToRemove = tiersToRemove.filter(t => t.sold === 0);
+      if (safeToRemove.length > 0) {
+        await tx.tier.deleteMany({
+          where: { id: { in: safeToRemove.map(t => t.id) } },
+        });
+      }
+
+      for (const tier of tiers) {
+        if (tier.id) {
+          await tx.tier.update({
+            where: { id: tier.id },
+            data: {
+              name: tier.name,
+              price: tier.price,
+              capacity: tier.capacity,
+            },
+          });
+        } else {
+          await tx.tier.create({
+            data: {
+              eventId,
+              name: tier.name,
+              price: tier.price,
+              capacity: tier.capacity,
+            },
+          });
+        }
+      }
+
+      return tx.event.findUnique({
+        where: { id: eventId },
+        include: { tiers: true, category: true },
+      });
+    });
+
+    return res.status(200).json(updatedEvent);
+  } catch (error) {
+    console.error("Event Update Error:", error);
+    next(error);
+  }
+});
 /**
  * DELETE PAST OR ERRONEOUS EVENT
  * DELETE /api/events/:id

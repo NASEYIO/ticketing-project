@@ -210,7 +210,19 @@ export const api = {
       throw new Error(error.response?.data?.error || "Could not approve event.");
     }
   },
-
+updateEvent: async (eventId, eventPayload) => {
+    try {
+      const response = await axios.patch(
+        `${BASE_URL}/events/${eventId}`,
+        eventPayload,
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Event update failed:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Failed to update event.");
+    }
+  },
   rejectEvent: async (eventId) => {
     try {
       const response = await axios.delete(

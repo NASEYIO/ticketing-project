@@ -9,6 +9,7 @@ import Register from "./pages/Register.jsx";
 import MyTickets from "./pages/MyTickets.jsx";
 import OrganizerDashboard from "./pages/OrganizerDashboard.jsx";
 import CreateEvent from "./pages/CreateEvent.jsx";
+import EditEvent from "./pages/EditEvent.jsx";
 import AdminPanel from "./pages/AdminPanel.jsx";
 import TicketPass from "./pages/TicketPass.jsx";
 import Button from "./components/Button.jsx";
@@ -263,6 +264,7 @@ function App() {
               <Route path="/buyer/tickets" element={<MyTickets user={user} />} />
               <Route path="/organizer/dashboard" element={<OrganizerDashboard user={user} />} />
               <Route path="/organizer/create" element={<CreateEvent user={user} />} />
+              <Route path="/organizer/edit/:id" element={<EditEvent user={user} />} />
               <Route path="/admin" element={<AdminPanel user={user} />} />
               <Route path="/t/:ticketId" element={<TicketPass />} />
             </Routes>
