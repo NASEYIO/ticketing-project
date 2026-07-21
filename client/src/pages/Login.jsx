@@ -5,6 +5,7 @@ import Button from "../components/Button";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
 import { api } from "../services/api";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 
 function Login({ setUser, cart }) {
   const navigate = useNavigate();
@@ -13,7 +14,8 @@ function Login({ setUser, cart }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
+const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
   const handleIdentitySubmission = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -30,7 +32,9 @@ function Login({ setUser, cart }) {
 
       setUser(data.user);
 
-      if (cart) {
+     if (returnTo) {
+        navigate(decodeURIComponent(returnTo));
+      } else if (cart) {
         navigate("/checkout");
       } else {
         if (data.user?.role === "ORGANIZER") navigate("/organizer/dashboard");

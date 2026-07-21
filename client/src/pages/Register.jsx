@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import { api } from "../services/api";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 
 function Register({ setUser }) {
   const [name, setName] = useState("");
@@ -11,7 +12,9 @@ function Register({ setUser }) {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("BUYER");
   const [error, setError] = useState("");
-
+const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
+  
   const navigate = useNavigate();
 
   const handleRegisterSubmit = async (e) => {
@@ -31,7 +34,9 @@ function Register({ setUser }) {
 
       alert(`Welcome aboard, ${parsedUser.name}!`);
 
-      if (parsedUser.role === "ORGANIZER") {
+     if (returnTo) {
+        navigate(decodeURIComponent(returnTo));
+      } else if (parsedUser.role === "ORGANIZER") {
         navigate("/organizer/dashboard");
       } else {
         navigate("/");
