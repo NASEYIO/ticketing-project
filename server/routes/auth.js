@@ -140,8 +140,13 @@ router.post('/login', async (req, res, next) => {
 const crypto = require('crypto');
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
+let resendClient = null;
+function getResendClient() {
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
 /**
  * REQUEST PASSWORD RESET
  * POST /api/auth/forgot-password
@@ -166,14 +171,14 @@ router.post('/forgot-password', async (req, res, next) => {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
-    await prisma.user.update({
+ await getResendClient().emails.send({
       where: { id: user.id },
       data: { resetToken, resetTokenExpiry },
     });
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
-    await resend.emails.send({
+   await getResendClient().emails.send({
       from: 'VibePass <onboarding@resend.dev>',
       to: user.email,
       subject: 'Reset your VibePass password',
