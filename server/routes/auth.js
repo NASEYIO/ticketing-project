@@ -175,9 +175,8 @@ router.post('/forgot-password', async (req, res, next) => {
       where: { id: user.id },
       data: { resetToken, resetTokenExpiry },
     });
-
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-
+const cleanFrontendUrl = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
+const resetUrl = `${cleanFrontendUrl}/reset-password?token=${resetToken}`;
    await getResendClient().emails.send({
       from: 'VibePass <onboarding@resend.dev>',
       to: user.email,
