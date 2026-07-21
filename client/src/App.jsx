@@ -15,6 +15,7 @@ import TicketPass from "./pages/TicketPass.jsx";
 import Button from "./components/Button.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
+import VerifyTicket from "./pages/VerifyTicket.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -136,7 +137,13 @@ function App() {
             >
               Explore
             </Button>
-
+<Link
+              to="/verify"
+              style={{ color: "#475569", textDecoration: "none", fontWeight: "500", fontSize: "0.85rem", whiteSpace: "nowrap" }}
+            >
+              Verify Ticket
+            </Link>
+            
             {!user && (
               <>
                 <Link
@@ -275,6 +282,7 @@ function App() {
               <Route path="/organizer/edit/:id" element={<EditEvent user={user} />} />
               <Route path="/admin" element={<AdminPanel user={user} />} />
               <Route path="/t/:ticketId" element={<TicketPass />} />
+              <Route path="/verify" element={<VerifyTicket />} />
             </Routes>
           </div>
         </main>

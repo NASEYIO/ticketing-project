@@ -294,4 +294,15 @@ deleteUser: async (userId) => {
       throw new Error(error.response?.data?.error || "Failed to reset password.");
     }
   },
+  verifyTicket: async (secretCode) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/tickets/verify/${secretCode}`);
+      return response.data;
+    } catch (error) {
+      if (error.response?.data) {
+        return error.response.data;
+      }
+      throw new Error("Could not verify this ticket. Please try again.");
+    }
+  },
 };

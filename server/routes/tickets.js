@@ -100,5 +100,65 @@ router.post('/validate-gate', authenticateToken, requireRole(['ORGANIZER', 'ADMI
     next(error);
   }
 });
+/**
+ * 🔍 PUBLIC TICKET VERIFICATION
+ * GET /api/tickets/verify/:secretCode
+ */
+router.get('/verify/:secretCode', async (req, res, next) => {
+  const { secretCode } = req.params;
 
+  try {
+    const ticket = await prisma.ticket.findFirst({
+      where: { secretCode },
+      include: {
+        tier: {
+          include: {
+            event: {
+              select: { title: true, venue: true, date: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!ticket) {
+      return res.status(404).json({
+        valid: false,
+        status: 'NOT_FOUND',
+        message: 'This ticket code does not exist in our system. Do not proceed with this purchase.',
+      });
+    }
+
+    if (ticket.status === 'USED') {
+      return res.status(200).json({
+        valid: false,
+        status: 'USED',
+        message: 'This ticket has already been used to enter the event. It cannot be valid for a new buyer.',
+        eventTitle: ticket.tier.event.title,
+      });
+    }
+
+    if (ticket.status === 'REFUNDED') {
+      return res.status(200).json({
+        valid: false,
+        status: 'REFUNDED',
+        message: 'This ticket was refunded and is no longer valid.',
+        eventTitle: ticket.tier.event.title,
+      });
+    }
+
+    return res.status(200).json({
+      valid: true,
+      status: 'ACTIVE',
+      message: 'This ticket is genuine and has not yet been used.',
+      eventTitle: ticket.tier.event.title,
+      venue: ticket.tier.event.venue,
+      date: ticket.tier.event.date,
+      tierName: ticket.tier.name,
+    });
+  } catch (error) {
+    console.error('Ticket verification error:', error);
+    next(error);
+  }
+});
 module.exports = router;
