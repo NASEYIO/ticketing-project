@@ -1,6 +1,5 @@
 // FILE: src/pages/Register.jsx
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import { api } from "../services/api";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
@@ -14,7 +13,7 @@ function Register({ setUser }) {
   const [error, setError] = useState("");
 const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo");
-  
+
   const navigate = useNavigate();
 
   const handleRegisterSubmit = async (e) => {

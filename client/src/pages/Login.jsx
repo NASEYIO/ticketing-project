@@ -1,6 +1,5 @@
 // FILE: src/pages/Login.jsx
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
