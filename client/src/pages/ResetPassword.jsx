@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import Button from "../components/Button";
 import { api } from "../services/api";
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
 function ResetPassword() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -14,7 +15,8 @@ function ResetPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-
+const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -68,30 +70,48 @@ function ResetPassword() {
             </div>
           )}
 
-          <div>
+         <div>
             <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>New Password</label>
-            <input
-              type="password"
-              required
-              disabled={isLoading}
-              placeholder="••••••••"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              style={{ width: "100%", padding: "12px 16px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                type={showNewPassword ? "text" : "password"}
+                required
+                disabled={isLoading}
+                placeholder="••••••••"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                style={{ width: "100%", padding: "12px 16px", paddingRight: "45px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "transparent", border: "none", cursor: "pointer", color: "#64748b", fontSize: "1.2rem", padding: "4px" }}
+              >
+                <FontAwesomeIcon icon={showNewPassword ? faEyeSlash : faEye} />
+              </button>
+            </div>
           </div>
 
           <div>
             <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Confirm New Password</label>
-            <input
-              type="password"
-              required
-              disabled={isLoading}
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              style={{ width: "100%", padding: "12px 16px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                required
+                disabled={isLoading}
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                style={{ width: "100%", padding: "12px 16px", paddingRight: "45px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "transparent", border: "none", cursor: "pointer", color: "#64748b", fontSize: "1.2rem", padding: "4px" }}
+              >
+                <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
+              </button>
+            </div>
           </div>
 
           <Button type="submit" isLoading={isLoading} size="lg">
