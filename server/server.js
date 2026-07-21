@@ -60,6 +60,7 @@ app.use('/api/categories', categoryRoutes); // 👈 ALIGNED: Registered the drop
 app.use('/api/tickets', ticketRoutes);
 app.use("/api/users", require("./routes/users"));
 app.use("/api/admin", require("./routes/admin"));
+app.use("/api/transfers", require("./routes/transfers"));
 
 // Catch-all Fallback Endpoint Route
 app.use((req, res, next) => {

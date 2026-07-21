@@ -44,6 +44,7 @@ model User {
   events       Event[]   @relation("OrganizerEvents")
   tickets      Ticket[]
   orders       Order[]
+  sentTransfers TicketTransfer[]
 }
 
 model Event {
@@ -139,6 +140,7 @@ model Ticket {
   event      Event        @relation(fields: [eventId], references: [id])
   tier       Tier         @relation(fields: [tierId], references: [id])
   buyer      User         @relation(fields: [buyerId], references: [id])
+  transfers  TicketTransfer[]
 
   @@index([eventId, status])
   @@index([secretCode])
@@ -152,4 +154,24 @@ model Category {
   
   // Inverse relation reference back to any events cataloged under this segment
   events    Event[]
+}
+
+enum TransferStatus {
+  PENDING
+  ACCEPTED
+  CANCELLED
+  EXPIRED
+}
+
+model TicketTransfer {
+  id           String         @id @default(uuid())
+  ticketId     String
+  fromUserId   String
+  transferCode String         @unique
+  status       TransferStatus @default(PENDING)
+  createdAt    DateTime       @default(now())
+  expiresAt    DateTime
+
+  ticket       Ticket         @relation(fields: [ticketId], references: [id])
+  fromUser     User           @relation(fields: [fromUserId], references: [id])
 }

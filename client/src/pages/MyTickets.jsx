@@ -1,27 +1,48 @@
 // FILE: src/pages/MyTickets.jsx
 import { useState, useEffect } from "react";
 import { api } from "../services/api";
+import Button from "../components/Button";
 
 function MyTickets({ user }) {
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTransferLink, setActiveTransferLink] = useState(null);
+  const [transferringId, setTransferringId] = useState(null);
+
+  const fetchMyTickets = async () => {
+    try {
+      const data = await api.getMyTickets();
+      setTickets(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Wallet Fetch Error:", err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchMyTickets = async () => {
-      try {
-        const data = await api.getMyTickets();
-        setTickets(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Wallet Fetch Error:", err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchMyTickets();
   }, []);
+
+  const handleTransfer = async (ticketId) => {
+    setTransferringId(ticketId);
+    try {
+      const transfer = await api.createTransfer(ticketId);
+      const link = `${window.location.origin}/accept-transfer?code=${transfer.transferCode}`;
+      setActiveTransferLink(link);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setTransferringId(null);
+    }
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(activeTransferLink);
+    alert("Link copied! Send it to whoever you're transferring the ticket to.");
+  };
 
   if (isLoading) return <div style={{ padding: "40px", textAlign: "center" }}>Loading your secured entry wallet...</div>;
 
@@ -33,6 +54,22 @@ function MyTickets({ user }) {
       {error && (
         <div style={{ padding: "12px", background: "#fef2f2", color: "#b91c1c", borderRadius: "6px", marginTop: "10px" }}>
           ⚠️ {error}
+        </div>
+      )}
+
+      {activeTransferLink && (
+        <div style={{ padding: "16px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "10px", marginTop: "16px" }}>
+          <p style={{ margin: "0 0 8px 0", fontWeight: "600", color: "#1e40af" }}>Transfer link ready — expires in 24 hours</p>
+          <input
+            readOnly
+            value={activeTransferLink}
+            onClick={(e) => e.target.select()}
+            style={{ width: "100%", padding: "8px", boxSizing: "border-box", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem", marginBottom: "8px" }}
+          />
+          <div style={{ display: "flex", gap: "8px" }}>
+            <Button size="sm" onClick={copyLink}>Copy Link</Button>
+            <Button size="sm" variant="secondary" onClick={() => setActiveTransferLink(null)}>Done</Button>
+          </div>
         </div>
       )}
 
@@ -57,9 +94,21 @@ function MyTickets({ user }) {
                 <b>Tier:</b> {ticket.tier?.name || "Standard"} — <b>Venue:</b> {ticket.tier?.event?.venue || "Main Gate"}
               </p>
 
-              <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "6px", fontFamily: "monospace", fontSize: "0.95rem", textAlign: "center", border: "1px dashed #cbd5e1", color: "#0f172a" }}>
+              <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "6px", fontFamily: "monospace", fontSize: "0.95rem", textAlign: "center", border: "1px dashed #cbd5e1", color: "#0f172a", marginBottom: "12px" }}>
                 🔑 ENTRY CODE: {ticket.secretCode}
               </div>
+
+              {ticket.status === "ACTIVE" && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  isLoading={transferringId === ticket.id}
+                  onClick={() => handleTransfer(ticket.id)}
+                  fullWidth
+                >
+                  🔁 Transfer This Ticket
+                </Button>
+              )}
             </div>
           ))}
         </div>

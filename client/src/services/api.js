@@ -305,4 +305,39 @@ deleteUser: async (userId) => {
       throw new Error("Could not verify this ticket. Please try again.");
     }
   },
+  createTransfer: async (ticketId) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/transfers`,
+        { ticketId },
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Create transfer failed:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not create transfer.");
+    }
+  },
+
+  getTransferDetails: async (code) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/transfers/${code}`, { headers: getAuthHeader() });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || "Could not load transfer details.");
+    }
+  },
+
+  acceptTransfer: async (code) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/transfers/${code}/accept`,
+        {},
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || "Could not accept transfer.");
+    }
+  },
 };
