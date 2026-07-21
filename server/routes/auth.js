@@ -161,9 +161,6 @@ router.post('/forgot-password', async (req, res, next) => {
 
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
 
-    // Always respond the same way, whether or not the email exists —
-    // this prevents someone from using this endpoint to discover which
-    // emails are registered on the platform.
     if (!user) {
       return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
     }
@@ -171,13 +168,15 @@ router.post('/forgot-password', async (req, res, next) => {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
- await getResendClient().emails.send({
+    await prisma.user.update({
       where: { id: user.id },
       data: { resetToken, resetTokenExpiry },
     });
-const cleanFrontendUrl = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
-const resetUrl = `${cleanFrontendUrl}/reset-password?token=${resetToken}`;
-   await getResendClient().emails.send({
+
+    const cleanFrontendUrl = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
+    const resetUrl = `${cleanFrontendUrl}/reset-password?token=${resetToken}`;
+
+    await getResendClient().emails.send({
       from: 'VibePass <onboarding@resend.dev>',
       to: user.email,
       subject: 'Reset your VibePass password',
