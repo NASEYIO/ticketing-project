@@ -35,6 +35,8 @@ model User {
   name         String
   role         Role      @default(BUYER)
    isBanned     Boolean   @default(false)
+  resetToken       String?   // 👈 add this
+  resetTokenExpiry DateTime? // 👈 add this
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

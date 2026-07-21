@@ -275,4 +275,23 @@ deleteUser: async (userId) => {
       throw new Error(error.response?.data?.error || "Could not load user details.");
     }
   },
+  forgotPassword: async (email) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/forgot-password`, { email });
+      return response.data;
+    } catch (error) {
+      console.error("Forgot password request failed:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Failed to send reset email.");
+    }
+  },
+
+  resetPassword: async (token, newPassword) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/reset-password`, { token, newPassword });
+      return response.data;
+    } catch (error) {
+      console.error("Reset password failed:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Failed to reset password.");
+    }
+  },
 };

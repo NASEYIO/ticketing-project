@@ -13,6 +13,8 @@ import EditEvent from "./pages/EditEvent.jsx";
 import AdminPanel from "./pages/AdminPanel.jsx";
 import TicketPass from "./pages/TicketPass.jsx";
 import Button from "./components/Button.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -48,7 +50,7 @@ function App() {
     setCart(null);
     alert("Logged out successfully");
   };
-  
+
   return (
     <Router>
       {/* Main wrapper: Enforces strict screen boundaries on mobile devices */}
@@ -263,6 +265,9 @@ function App() {
               <Route path="/event/:id" element={<EventDetails setCart={setCart} />} />
               <Route path="/checkout" element={<Checkout cart={cart} setCart={setCart} user={user} setUser={setUser} />} />
               <Route path="/login" element={<Login setUser={setUser} cart={cart} />} />
+<Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+
               <Route path="/register" element={<Register setUser={setUser} />} />
               <Route path="/buyer/tickets" element={<MyTickets user={user} />} />
               <Route path="/organizer/dashboard" element={<OrganizerDashboard user={user} />} />

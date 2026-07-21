@@ -26,7 +26,8 @@
     "express": "^5.2.1",
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "resend": "^6.17.2"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^13.1.0",

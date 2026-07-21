@@ -1,6 +1,6 @@
 // FILE: src/pages/Login.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
@@ -72,7 +72,7 @@ function Login({ setUser, cart }) {
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
             <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Password</label>
-            <a href="#forgot" style={{ fontSize: "0.85rem", color: "#2563eb", textDecoration: "none" }}>Forgot?</a>
+           <Link to="/forgot-password" style={{ fontSize: "0.85rem", color: "#2563eb", textDecoration: "none" }}>Forgot?</Link>
           </div>
           <div style={{ position: "relative" }}>
             <input

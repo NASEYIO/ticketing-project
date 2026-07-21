@@ -137,5 +137,101 @@ router.post('/login', async (req, res, next) => {
     next(error);
   }
 });
+const crypto = require('crypto');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+/**
+ * REQUEST PASSWORD RESET
+ * POST /api/auth/forgot-password
+ */
+router.post('/forgot-password', async (req, res, next) => {
+  const { email } = req.body;
+
+  try {
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+
+    // Always respond the same way, whether or not the email exists —
+    // this prevents someone from using this endpoint to discover which
+    // emails are registered on the platform.
+    if (!user) {
+      return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken, resetTokenExpiry },
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    await resend.emails.send({
+      from: 'VibePass <onboarding@resend.dev>',
+      to: user.email,
+      subject: 'Reset your VibePass password',
+      html: `
+        <p>Hi ${user.name},</p>
+        <p>We received a request to reset your VibePass password. Click the link below to set a new one:</p>
+        <p><a href="${resetUrl}">${resetUrl}</a></p>
+        <p>This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
+      `,
+    });
+
+    return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    next(error);
+  }
+});
+
+/**
+ * RESET PASSWORD
+ * POST /api/auth/reset-password
+ */
+router.post('/reset-password', async (req, res, next) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token and new password are required' });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: token,
+        resetTokenExpiry: { gt: new Date() }, // must not be expired
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'This reset link is invalid or has expired.' });
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
+    });
+
+    return res.status(200).json({ message: 'Password reset successfully. You can now log in.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    next(error);
+  }
+});
 
 module.exports = router;
