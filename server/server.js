@@ -51,7 +51,8 @@ app.use(cors({
 }));
 
 app.use(express.json()); // Parses incoming application/json body frames
-
+const { generalLimiter } = require('./middleware/rateLimiters');
+app.use(generalLimiter);
 // API Route Mountpoints
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);

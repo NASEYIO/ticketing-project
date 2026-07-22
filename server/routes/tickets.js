@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const prisma = require('../config/prisma');
 const { authenticateToken, requireRole } = require('../middleware/auth');
-
+const { verifyLimiter } = require('../middleware/rateLimiters');
 /**
  * 🎟️ FETCH LIVE TICKETS FOR THE SIGNED-IN BUYER WALLET
  * GET /api/tickets/my-wallet
@@ -104,7 +104,7 @@ router.post('/validate-gate', authenticateToken, requireRole(['ORGANIZER', 'ADMI
  * 🔍 PUBLIC TICKET VERIFICATION
  * GET /api/tickets/verify/:secretCode
  */
-router.get('/verify/:secretCode', async (req, res, next) => {
+router.get('/verify/:secretCode', verifyLimiter, async (req, res, next) => {
   const { secretCode } = req.params;
 
   try {
