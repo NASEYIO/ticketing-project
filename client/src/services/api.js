@@ -305,11 +305,11 @@ deleteUser: async (userId) => {
       throw new Error("Could not verify this ticket. Please try again.");
     }
   },
-  createTransfer: async (ticketId) => {
+createTransfer: async (ticketId, recipientEmail) => {
     try {
       const response = await axios.post(
         `${BASE_URL}/transfers`,
-        { ticketId },
+        { ticketId, recipientEmail },
         { headers: getAuthHeader() }
       );
       return response.data;
@@ -318,7 +318,6 @@ deleteUser: async (userId) => {
       throw new Error(error.response?.data?.error || "Could not create transfer.");
     }
   },
-
   getTransferDetails: async (code) => {
     try {
       const response = await axios.get(`${BASE_URL}/transfers/${code}`, { headers: getAuthHeader() });
