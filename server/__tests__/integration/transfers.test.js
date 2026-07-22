@@ -3,6 +3,15 @@
 // LAYER: Integration test
 // Tests the full ticket transfer flow: create → view → accept,
 // against the real database, using real signed JWTs for two test users.
+// The Resend email client is mocked so no real email is sent during tests.
+
+jest.mock('resend', () => ({
+  Resend: jest.fn().mockImplementation(() => ({
+    emails: {
+      send: jest.fn().mockResolvedValue({ id: 'mock-email-id' }),
+    },
+  })),
+}));
 
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
@@ -17,7 +26,7 @@ function makeToken(user) {
 
 describe('Ticket Transfers', () => {
   let senderId, recipientId, organizerId, eventId, tierId, ticketId;
-  let senderToken, recipientToken;
+  let senderToken, recipientToken, recipientEmail;
 
   beforeAll(async () => {
     const sender = await prisma.user.create({
@@ -42,6 +51,7 @@ describe('Ticket Transfers', () => {
       },
     });
     recipientId = recipient.id;
+    recipientEmail = recipient.email;
     recipientToken = makeToken(recipient);
 
     const organizer = await prisma.user.create({
@@ -102,18 +112,20 @@ describe('Ticket Transfers', () => {
     const response = await request(app)
       .post('/api/transfers')
       .set('Authorization', `Bearer ${senderToken}`)
-      .send({ ticketId });
+      .send({ ticketId, recipientEmail });
 
     expect(response.status).toBe(201);
-    expect(response.body.transferCode).toBeDefined();
-    transferCode = response.body.transferCode;
+    expect(response.body.message).toContain(recipientEmail);
+
+    const transferRecord = await prisma.ticketTransfer.findFirst({ where: { ticketId } });
+    transferCode = transferRecord.transferCode;
   });
 
   it('blocks someone who does not own the ticket from transferring it', async () => {
     const response = await request(app)
       .post('/api/transfers')
       .set('Authorization', `Bearer ${recipientToken}`)
-      .send({ ticketId });
+      .send({ ticketId, recipientEmail: 'someoneelse@example.com' });
 
     expect(response.status).toBe(403);
   });

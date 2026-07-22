@@ -164,14 +164,15 @@ enum TransferStatus {
 }
 
 model TicketTransfer {
-  id           String         @id @default(uuid())
-  ticketId     String
-  fromUserId   String
-  transferCode String         @unique
-  status       TransferStatus @default(PENDING)
-  createdAt    DateTime       @default(now())
-  expiresAt    DateTime
+  id             String         @id @default(uuid())
+  ticketId       String
+  fromUserId     String
+  recipientEmail String
+  transferCode   String         @unique
+  status         TransferStatus @default(PENDING)
+  createdAt      DateTime       @default(now())
+  expiresAt      DateTime
 
-  ticket       Ticket         @relation(fields: [ticketId], references: [id])
-  fromUser     User           @relation(fields: [fromUserId], references: [id])
+  ticket         Ticket         @relation(fields: [ticketId], references: [id])
+  fromUser       User           @relation(fields: [fromUserId], references: [id])
 }
