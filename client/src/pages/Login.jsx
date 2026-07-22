@@ -1,5 +1,5 @@
 // FILE: src/pages/Login.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../components/Button";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
@@ -14,7 +14,17 @@ function Login({ setUser, cart }) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 const [searchParams] = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+const [retryAfter, setRetryAfter] = useState(0);
+
+useEffect(() => {
+    if (retryAfter <= 0) return;
+    const timer = setInterval(() => {
+      setRetryAfter((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [retryAfter]);
+
+const returnTo = searchParams.get("returnTo");
   const handleIdentitySubmission = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -40,11 +50,20 @@ const [searchParams] = useSearchParams();
         else if (data.user?.role === "ADMIN") navigate("/admin");
         else navigate("/");
       }
-    } catch (err) {
+   } catch (err) {
       setErrorMessage(err.message || "Network connectivity failure detected.");
+      if (err.retryAfter) {
+        setRetryAfter(err.retryAfter);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const formatCountdown = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -116,13 +135,14 @@ const [searchParams] = useSearchParams();
           </div>
         </div>
 
-        <Button
+       <Button
           type="submit"
           isLoading={isLoading}
+          disabled={retryAfter > 0}
           size="lg"
           style={{ marginTop: "10px" }}
         >
-          Continue
+          {retryAfter > 0 ? `Try again in ${formatCountdown(retryAfter)}` : "Continue"}
         </Button>
       </form>
     </div>

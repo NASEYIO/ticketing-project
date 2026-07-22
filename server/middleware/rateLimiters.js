@@ -7,11 +7,17 @@ const rateLimit = require('express-rate-limit');
 
 // Strict — for login/register, where brute-forcing credentials is the risk
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per window
-  message: { error: 'Too many attempts. Please try again in 15 minutes.' },
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    const retryAfterSeconds = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
+    res.status(429).json({
+      error: 'Too many attempts. Please try again later.',
+      retryAfter: retryAfterSeconds,
+    });
+  },
 });
 
 // Very strict — for password reset requests, to prevent email-flooding abuse

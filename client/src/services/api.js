@@ -21,13 +21,15 @@ const getAuthHeader = () => {
 
 export const api = {
   // Auth: login
-  login: async ({ identifier, password }) => {
+ login: async ({ identifier, password }) => {
     try {
       const response = await axios.post(`${BASE_URL}/auth/login`, { identifier, password });
       return response.data;
     } catch (error) {
       console.error("Login request failed:", error.response?.data || error);
-      throw new Error(error.response?.data?.error || "Authentication failed. Check credentials.");
+      const err = new Error(error.response?.data?.error || "Authentication failed. Check credentials.");
+      err.retryAfter = error.response?.data?.retryAfter;
+      throw err;
     }
   },
 
