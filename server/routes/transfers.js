@@ -3,17 +3,33 @@ const router = require('express').Router();
 const crypto = require('crypto');
 const prisma = require('../config/prisma');
 const { authenticateToken } = require('../middleware/auth');
+const { Resend } = require('resend');
+
+let resendClient = null;
+function getResendClient() {
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
 
 /**
- * CREATE A TRANSFER — generates a shareable code for one of your own tickets
+ * CREATE A TRANSFER — sends the recipient an email with a link to accept
  * POST /api/transfers
  */
 router.post('/', authenticateToken, async (req, res, next) => {
-  const { ticketId } = req.body;
+  const { ticketId, recipientEmail } = req.body;
   const userId = req.user.id;
 
   try {
-    const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
+    if (!recipientEmail) {
+      return res.status(400).json({ error: 'Recipient email is required.' });
+    }
+
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: { tier: { include: { event: true } } },
+    });
 
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found.' });
@@ -27,25 +43,47 @@ router.post('/', authenticateToken, async (req, res, next) => {
       return res.status(400).json({ error: 'Only active, unused tickets can be transferred.' });
     }
 
-    // Cancel any previous pending transfer for this ticket before creating a new one
+    const sender = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (recipientEmail.toLowerCase().trim() === sender.email.toLowerCase()) {
+      return res.status(400).json({ error: 'You cannot transfer a ticket to yourself.' });
+    }
+
     await prisma.ticketTransfer.updateMany({
       where: { ticketId, status: 'PENDING' },
       data: { status: 'CANCELLED' },
     });
 
     const transferCode = crypto.randomBytes(16).toString('hex');
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    const transfer = await prisma.ticketTransfer.create({
+    await prisma.ticketTransfer.create({
       data: {
         ticketId,
         fromUserId: userId,
+        recipientEmail: recipientEmail.toLowerCase().trim(),
         transferCode,
         expiresAt,
       },
     });
 
-    return res.status(201).json(transfer);
+    const cleanFrontendUrl = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
+    const acceptUrl = `${cleanFrontendUrl}/accept-transfer?code=${transferCode}`;
+
+    await getResendClient().emails.send({
+      from: 'VibePass <onboarding@resend.dev>',
+      to: recipientEmail,
+      subject: `${sender.name} sent you a ticket on VibePass!`,
+      html: `
+        <p>Hi there,</p>
+        <p><b>${sender.name}</b> wants to transfer their ticket for <b>${ticket.tier.event.title}</b> to you.</p>
+        <p><a href="${acceptUrl}">${acceptUrl}</a></p>
+        <p>If you don't have a VibePass account yet with this email, you'll need to sign up first, then click the link again to accept.</p>
+        <p>This link expires in 24 hours.</p>
+      `,
+    });
+
+    return res.status(201).json({ message: `Transfer email sent to ${recipientEmail}` });
   } catch (error) {
     console.error('Create transfer error:', error);
     next(error);
@@ -131,6 +169,11 @@ router.post('/:code/accept', authenticateToken, async (req, res, next) => {
 
     if (transfer.ticket.status !== 'ACTIVE') {
       return res.status(400).json({ error: 'This ticket is no longer eligible for transfer.' });
+    }
+
+    const acceptingUser = await prisma.user.findUnique({ where: { id: newOwnerId } });
+    if (acceptingUser.email.toLowerCase() !== transfer.recipientEmail.toLowerCase()) {
+      return res.status(403).json({ error: 'This transfer was sent to a different email address. Please log in with that account.' });
     }
 
     await prisma.$transaction([
