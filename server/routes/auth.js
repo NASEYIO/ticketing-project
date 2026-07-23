@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const { authLimiter, passwordResetLimiter } = require('../middleware/rateLimiters');
+const { registerValidation, loginValidation, forgotPasswordValidation, resetPasswordValidation } = require('../middleware/validators');
+
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_vibe_key';
 
@@ -11,7 +13,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_vibe_key';
  * PRODUCTION-GRADE UNIFIED REGISTRATION ENDPOINT
  * POST /api/auth/register
  */
-router.post('/register', authLimiter, async (req, res, next) => {
+router.post('/register', authLimiter, registerValidation, async (req, res, next) => {
   const { email, phoneNumber, password, name, role } = req.body;
 
   try {
@@ -78,7 +80,8 @@ router.post('/register', authLimiter, async (req, res, next) => {
  * UNIFIED SINGLE SIGN-ON (SSO) LOGIN ENDPOINT
  * POST /api/auth/login
  */
-router.post('/login', authLimiter, async (req, res, next) => {
+router.post('/login', authLimiter, loginValidation, async (req, res, next) => {
+
   const { identifier, password } = req.body;
 
   try {
@@ -151,7 +154,8 @@ function getResendClient() {
  * REQUEST PASSWORD RESET
  * POST /api/auth/forgot-password
  */
-router.post('/forgot-password', passwordResetLimiter, async (req, res, next) => {
+router.post('/forgot-password', passwordResetLimiter, forgotPasswordValidation, async (req, res, next) => {
+
   const { email } = req.body;
 
   try {
@@ -199,7 +203,8 @@ router.post('/forgot-password', passwordResetLimiter, async (req, res, next) => 
  * RESET PASSWORD
  * POST /api/auth/reset-password
  */
-router.post('/reset-password', async (req, res, next) => {
+router.post('/reset-password', resetPasswordValidation, async (req, res, next) => {
+  
   const { token, newPassword } = req.body;
 
   try {
