@@ -20,25 +20,28 @@ const app = express();
 app.use(helmet({ crossOriginResourcePolicy: false })); 
 
 // 🛠️ DYNAMIC CORS ENGINE: Dynamically accepts changing Vercel domains + local test environments
+// 🛠️ CORS: Explicit allowlist — exact matches or precise pattern checks only,
+// no loose substring matching that could be exploited.
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  process.env.FRONTEND_URL, // your production Vercel URL, set as an env var
+].filter(Boolean); // removes any undefined entries
+
+// Vercel preview deployments get unique subdomains per branch/PR
+// (e.g. client-git-feature-x-yourteam.vercel.app), so we match those
+// precisely by pattern rather than a loose substring check.
+const vercelPreviewPattern = /^https:\/\/client-[a-z0-9-]+\.vercel\.app$/;
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, postman)
-    if (!origin) return callback(null, true);
-    
-    const allowedDomains = [
-      'localhost',
-      '127.0.0.1',
-      'vercel.app', 
-      'io-3680s-projects',
-      '.ngrok-free.dev', // 👈 ADD THIS
-    '192.168.',        // 👈 ADD THIS for LAN
-    '10.',             // 👈 ADD THIS for other LAN ranges
-    '172.'           // 🚀 Automatically accepts any deployment url Vercel creates
-    ];
+    if (!origin) return callback(null, true); // mobile apps, curl, Postman, etc.
 
-    const isAllowed = allowedDomains.some(domain => origin.includes(domain));
-    
-    if (isAllowed) {
+    const isExactMatch = allowedOrigins.includes(origin);
+    const isVercelPreview = vercelPreviewPattern.test(origin);
+
+    if (isExactMatch || isVercelPreview) {
       callback(null, true);
     } else {
       console.log(`⚠️ CORS Blocked Origin: ${origin}`);
