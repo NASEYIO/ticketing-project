@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { api } from "../services/api";
 import Button from "../components/Button";
+import { Link } from "react-router-dom";
 
 function MyTickets({ user }) {
   const [tickets, setTickets] = useState([]);
@@ -88,6 +89,12 @@ function MyTickets({ user }) {
               <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "6px", fontFamily: "monospace", fontSize: "0.95rem", textAlign: "center", border: "1px dashed #cbd5e1", color: "#0f172a", marginBottom: "12px" }}>
                 🔑 ENTRY CODE: {ticket.secretCode}
               </div>
+
+              <Link to={`/t/${ticket.id}`} style={{ textDecoration: "none" }}>
+                <Button size="sm" fullWidth style={{ marginBottom: "8px" }}>
+                  📱 View QR Code
+                </Button>
+              </Link>
 
               {ticket.status === "ACTIVE" && (
                 transferModalTicketId === ticket.id ? (
