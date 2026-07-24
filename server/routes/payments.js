@@ -346,21 +346,53 @@ router.post('/callback', async (req, res) => {
         return;
       }
 
-      await prisma.$transaction(async (tx) => {
+      const quantity = trackingPayment.quantity || 1;
+
+      const soldOut = await prisma.$transaction(async (tx) => {
+        // Atomic capacity reservation: this single SQL statement checks AND
+        // increments `sold` in one indivisible step. If two payments confirm
+        // at the same instant, Postgres guarantees only one can succeed
+        // if there isn't enough room for both — this is what actually
+        // prevents overselling, not just a plain read-then-write check.
+        const reserved = await tx.$executeRaw`
+          UPDATE "Tier"
+          SET sold = sold + ${quantity}
+          WHERE id = ${trackingPayment.tierId}
+            AND sold + ${quantity} <= capacity
+        `;
+
+        if (reserved === 0) {
+          // Payment succeeded, but capacity ran out before we could confirm it.
+          // Mark the payment as successful (money was received) but flag it
+          // distinctly so it can be manually refunded — do NOT create tickets.
+          await tx.payment.update({
+            where: { id: trackingPayment.id },
+            data: {
+              status: 'SUCCESSFUL',
+              mpesaReceiptNumber: mpesaReceiptNumber,
+            },
+          });
+          await tx.order.update({
+            where: { id: trackingPayment.orderId },
+            data: { status: 'SUCCESSFUL' },
+          });
+          return true; // signal: sold out, needs manual refund
+        }
+
         await tx.payment.update({
           where: { id: trackingPayment.id },
           data: {
             status: 'SUCCESSFUL',
-            mpesaReceiptNumber: mpesaReceiptNumber
-          }
+            mpesaReceiptNumber: mpesaReceiptNumber,
+          },
         });
 
         await tx.order.update({
           where: { id: trackingPayment.orderId },
-          data: { status: 'SUCCESSFUL' }
+          data: { status: 'SUCCESSFUL' },
         });
 
-        for (let i = 0; i < (trackingPayment.quantity || 1); i++) {
+        for (let i = 0; i < quantity; i++) {
           const uniqueSecret = `TIC-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
           await tx.ticket.create({
@@ -370,13 +402,19 @@ router.post('/callback', async (req, res) => {
               tierId: trackingPayment.tierId,
               buyerId: parentOrder.buyerId,
               status: 'ACTIVE',
-              secretCode: uniqueSecret
-            }
+              secretCode: uniqueSecret,
+            },
           });
         }
+
+        return false; // signal: tickets created normally
       });
 
-      console.log(`✅ Success Core Complete: Generated ${trackingPayment.quantity} active tickets for Buyer ID: ${parentOrder.buyerId}`);
+      if (soldOut) {
+        console.error(`🚨 OVERSOLD ALERT: Payment ${trackingPayment.id} succeeded but tier ${trackingPayment.tierId} had no remaining capacity. Buyer ${parentOrder.buyerId} paid but received no tickets — manual refund required.`);
+      } else {
+        console.log(`✅ Success Core Complete: Generated ${quantity} active tickets for Buyer ID: ${parentOrder.buyerId}`);
+      }
     }
   } catch (error) {
     console.error("❌ M-Pesa Callback Critical Transaction Engine Breakdown:", error);
