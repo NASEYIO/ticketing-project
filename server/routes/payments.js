@@ -15,11 +15,19 @@ function getResendClient() {
   return resendClient;
 }
 
-const AfricasTalking = require('africastalking')({
-  apiKey: process.env.AFRICASTALKING_API_KEY,
-  username: process.env.AFRICASTALKING_USERNAME,
-});
-const sms = AfricasTalking.SMS;
+const africastalking = require('africastalking');
+
+let smsClient = null;
+function getSmsClient() {
+  if (!smsClient) {
+    const AfricasTalking = africastalking({
+      apiKey: process.env.AFRICASTALKING_API_KEY,
+      username: process.env.AFRICASTALKING_USERNAME,
+    });
+    smsClient = AfricasTalking.SMS;
+  }
+  return smsClient;
+}
 
 const MPESA_BASE_URLS = {
   sandbox: 'https://sandbox.safaricom.co.ke',
@@ -460,7 +468,7 @@ router.post('/callback', async (req, res) => {
         // Send an SMS confirmation too — separate try/catch so an SMS
         // failure never blocks or undoes the email or the ticket itself.
         try {
-          await sms.send({
+        await getSmsClient().send({
             to: [`+${buyer.phoneNumber.startsWith('254') ? buyer.phoneNumber : '254' + buyer.phoneNumber.slice(1)}`],
             message: `VibePass: Payment confirmed! ${quantity} ticket(s) for ${trackingPayment.tier.event.title}. View at ${cleanFrontendUrl}/buyer/tickets`,
           });
