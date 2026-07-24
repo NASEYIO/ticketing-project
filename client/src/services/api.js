@@ -146,9 +146,18 @@ export const api = {
       console.error("Wallet data download failure:", error.response?.data || error);
       throw new Error(error.response?.data?.message || "Could not retrieve secure tickets.");
     }
-  }
+  },
+getTicketById: async (ticketId) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/tickets/${ticketId}`, { headers: getAuthHeader() });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || "Could not load this ticket.");
+    }
+  },
+  
   // ---------- ADMIN ----------
-,
+
   getAdminUsers: async () => {
     try {
       const response = await axios.get
