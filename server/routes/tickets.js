@@ -161,4 +161,32 @@ router.get('/verify/:secretCode', verifyLimiter, async (req, res, next) => {
     next(error);
   }
 });
+
+/**
+ * GET A SINGLE TICKET BY ID — for the dedicated ticket pass page
+ * GET /api/tickets/:id
+ */
+router.get('/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: req.params.id },
+      include: {
+        tier: { include: { event: true } },
+      },
+    });
+
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found.' });
+    }
+
+    if (ticket.buyerId !== req.user.id) {
+      return res.status(403).json({ error: 'This ticket does not belong to you.' });
+    }
+
+    return res.status(200).json(ticket);
+  } catch (error) {
+    console.error('Get single ticket error:', error);
+    next(error);
+  }
+});
 module.exports = router;
