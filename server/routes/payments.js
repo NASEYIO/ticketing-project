@@ -482,4 +482,58 @@ router.post('/callback', async (req, res) => {
   }
 });
 
+// 2. Add or update the reservation route
+router.post('/reserve', async (req, res) => {
+  const { tierId, quantity = 1, userId } = req.body;
+  const HOLD_DURATION_MINUTES = 10;
+
+  try {
+    // Perform check + decrement + reservation creation in ONE transaction
+    const reservation = await prisma.$transaction(async (tx) => {
+      // Step A: Safely decrement remaining capacity ONLY if enough tickets exist
+      const updateResult = await tx.ticketTier.updateMany({
+        where: {
+          id: tierId,
+          remainingCapacity: { gte: quantity },
+        },
+        data: {
+          remainingCapacity: { decrement: quantity },
+        },
+      });
+
+      // If count is 0, someone else bought the last ticket a millisecond earlier!
+      if (updateResult.count === 0) {
+        throw new Error('SOLD_OUT');
+      }
+
+      // Step B: Calculate 10-minute expiration time
+      const expiresAt = new Date(Date.now() + HOLD_DURATION_MINUTES * 60 * 1000);
+
+      // Step C: Save reservation
+      return await tx.reservation.create({
+        data: {
+          tierId,
+          quantity,
+          userId: userId || null,
+          status: 'PENDING',
+          expiresAt,
+        },
+      });
+    });
+
+    // Return the reservation ID and expiration time so frontend can start its timer
+    return res.status(200).json({
+      success: true,
+      reservationId: reservation.id,
+      expiresAt: reservation.expiresAt,
+    });
+
+  } catch (error) {
+    if (error.message === 'SOLD_OUT') {
+      return res.status(409).json({ error: 'Selected ticket tier is sold out.' });
+    }
+    console.error('Reservation Error:', error);
+    return res.status(500).json({ error: 'Internal server error during reservation.' });
+  }
+});
 module.exports = router;
