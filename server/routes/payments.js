@@ -5,6 +5,22 @@ const crypto = require('crypto');
 const prisma = require('../config/prisma');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
+const { Resend } = require('resend');
+
+let resendClient = null;
+function getResendClient() {
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
+
+const AfricasTalking = require('africastalking')({
+  apiKey: process.env.AFRICASTALKING_API_KEY,
+  username: process.env.AFRICASTALKING_USERNAME,
+});
+const sms = AfricasTalking.SMS;
+
 const MPESA_BASE_URLS = {
   sandbox: 'https://sandbox.safaricom.co.ke',
   production: 'https://api.safaricom.co.ke'
@@ -335,7 +351,8 @@ router.post('/callback', async (req, res) => {
 
       const metadataItems = CallbackMetadata?.Item || [];
       const receiptItem = metadataItems.find(item => item.Name === 'MpesaReceiptNumber');
-      const mpesaReceiptNumber = receiptItem ? String(receiptItem.Value) : `MPESA-${Date.now()}`;
+     
+     const mpesaReceiptNumber = receiptItem ? String(receiptItem.Value) : `MPESA-${Date.now()}`;
 
       const parentOrder = await prisma.order.findUnique({
         where: { id: trackingPayment.orderId }
@@ -414,6 +431,42 @@ router.post('/callback', async (req, res) => {
         console.error(`🚨 OVERSOLD ALERT: Payment ${trackingPayment.id} succeeded but tier ${trackingPayment.tierId} had no remaining capacity. Buyer ${parentOrder.buyerId} paid but received no tickets — manual refund required.`);
       } else {
         console.log(`✅ Success Core Complete: Generated ${quantity} active tickets for Buyer ID: ${parentOrder.buyerId}`);
+
+        const buyer = await prisma.user.findUnique({ where: { id: parentOrder.buyerId } });
+        const cleanFrontendUrl = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
+
+        // Send a purchase confirmation email — failures here are logged
+        // but never block the actual ticket creation that already succeeded.
+        try {
+          await getResendClient().emails.send({
+            from: 'VibePass <onboarding@resend.dev>',
+            to: buyer.email,
+            subject: `Your tickets for ${trackingPayment.tier.event.title} are confirmed!`,
+            html: `
+              <p>Hi ${buyer.name},</p>
+              <p>Your payment was successful! You now have <b>${quantity}</b> ticket(s) for:</p>
+              <p><b>${trackingPayment.tier.event.title}</b><br/>
+              ${trackingPayment.tier.event.venue}<br/>
+              ${new Date(trackingPayment.tier.event.date).toLocaleDateString('en-KE', { dateStyle: 'medium' })}</p>
+              <p>Tier: ${trackingPayment.tier.name}</p>
+              <p>M-Pesa Receipt: ${mpesaReceiptNumber}</p>
+              <p><a href="${cleanFrontendUrl}/buyer/tickets">View your tickets</a></p>
+            `,
+          });
+        } catch (emailError) {
+          console.error('Failed to send purchase confirmation email:', emailError);
+        }
+
+        // Send an SMS confirmation too — separate try/catch so an SMS
+        // failure never blocks or undoes the email or the ticket itself.
+        try {
+          await sms.send({
+            to: [`+${buyer.phoneNumber.startsWith('254') ? buyer.phoneNumber : '254' + buyer.phoneNumber.slice(1)}`],
+            message: `VibePass: Payment confirmed! ${quantity} ticket(s) for ${trackingPayment.tier.event.title}. View at ${cleanFrontendUrl}/buyer/tickets`,
+          });
+        } catch (smsError) {
+          console.error('Failed to send purchase confirmation SMS:', smsError);
+        }
       }
     }
   } catch (error) {
