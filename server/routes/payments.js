@@ -333,10 +333,14 @@ router.get('/organizer-metrics', authenticateToken, requireRole('ORGANIZER'), as
 router.post('/callback', async (req, res) => {
   res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
 
+  console.log('📩 RAW CALLBACK RECEIVED:', JSON.stringify(req.body));
+
   try {
     const { Body } = req.body;
-    if (!Body || !Body.stkCallback) return;
-
+    if (!Body || !Body.stkCallback) {
+      console.log('⚠️ Callback body did not match expected shape.');
+      return;
+    }
     const { CheckoutRequestID, ResultCode, CallbackMetadata } = Body.stkCallback;
 
     console.log(`Processing callback for CheckoutRequestID: ${CheckoutRequestID} with ResultCode: ${ResultCode}`);
