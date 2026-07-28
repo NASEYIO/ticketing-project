@@ -333,7 +333,6 @@ router.get('/organizer-metrics', authenticateToken, requireRole('ORGANIZER'), as
 router.post('/callback', async (req, res) => {
   res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
 
-  console.log('📩 RAW CALLBACK RECEIVED:', JSON.stringify(req.body));
 
   try {
     const { Body } = req.body;
@@ -449,7 +448,7 @@ router.post('/callback', async (req, res) => {
 
         // Send a purchase confirmation email — failures here are logged
         // but never block the actual ticket creation that already succeeded.
-        try {
+       try {
           await getResendClient().emails.send({
             from: 'VibePass <onboarding@resend.dev>',
             to: buyer.email,
@@ -465,23 +464,21 @@ router.post('/callback', async (req, res) => {
               <p><a href="${cleanFrontendUrl}/buyer/tickets">View your tickets</a></p>
             `,
           });
+          console.log(`📧 Email sent to buyer ${buyer.id}`);
         } catch (emailError) {
-          console.error('Failed to send purchase confirmation email:', emailError);
+          console.error(`Failed to send email to buyer ${buyer.id}:`, emailError.message);
         }
 
         // Send an SMS confirmation too — separate try/catch so an SMS
         // failure never blocks or undoes the email or the ticket itself.
-       try {
-          const smsPayload = {
+      try {
+          await getSmsClient().send({
             to: [`+${buyer.phoneNumber.startsWith('254') ? buyer.phoneNumber : '254' + buyer.phoneNumber.slice(1)}`],
             message: `VibePass: Payment confirmed! ${quantity} ticket(s) for ${trackingPayment.tier.event.title}. View at ${cleanFrontendUrl}/buyer/tickets`,
-          };
-          console.log('📱 SMS payload being sent:', JSON.stringify(smsPayload));
-
-          const smsResult = await getSmsClient().send(smsPayload);
-          console.log('📱 SMS send result:', JSON.stringify(smsResult));
+          });
+          console.log(`📱 SMS sent to buyer ${buyer.id}`);
         } catch (smsError) {
-          console.error('Failed to send purchase confirmation SMS:', smsError);
+          console.error(`Failed to send SMS to buyer ${buyer.id}:`, smsError.message);
         }
       }
     }
