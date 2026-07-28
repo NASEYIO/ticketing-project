@@ -471,11 +471,15 @@ router.post('/callback', async (req, res) => {
 
         // Send an SMS confirmation too — separate try/catch so an SMS
         // failure never blocks or undoes the email or the ticket itself.
-        try {
-        await getSmsClient().send({
+       try {
+          const smsPayload = {
             to: [`+${buyer.phoneNumber.startsWith('254') ? buyer.phoneNumber : '254' + buyer.phoneNumber.slice(1)}`],
             message: `VibePass: Payment confirmed! ${quantity} ticket(s) for ${trackingPayment.tier.event.title}. View at ${cleanFrontendUrl}/buyer/tickets`,
-          });
+          };
+          console.log('📱 SMS payload being sent:', JSON.stringify(smsPayload));
+
+          const smsResult = await getSmsClient().send(smsPayload);
+          console.log('📱 SMS send result:', JSON.stringify(smsResult));
         } catch (smsError) {
           console.error('Failed to send purchase confirmation SMS:', smsError);
         }
