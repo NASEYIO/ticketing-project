@@ -14,6 +14,7 @@ const categoryRoutes = require('./routes/categories'); // 👈 ALIGNED: Imported
 const ticketRoutes = require('./routes/tickets');
 
 const app = express();
+app.set('trust proxy', 1); 
 
 // Security Hardening Middlewares
 // Adjusted helmet for relaxed development cross-origin resource sharing policies
