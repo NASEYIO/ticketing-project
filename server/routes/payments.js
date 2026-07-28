@@ -348,7 +348,7 @@ router.post('/callback', async (req, res) => {
     if (ResultCode === 0) {
       const trackingPayment = await prisma.payment.findFirst({
         where: { checkoutRequestId: CheckoutRequestID },
-        include: { tier: true }
+        include: { tier: { include: { event: true } } }
       });
 
       if (!trackingPayment) {
