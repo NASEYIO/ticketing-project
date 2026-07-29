@@ -50,7 +50,6 @@ function Checkout({ cart, user }) {
         checkoutRequestId: result.checkoutRequestId
       });
     } catch (err) {
-      // 🛠️ ERROR MESSAGE EXTRACTION FIX
       setCheckoutError(err.message || "M-Pesa STK push initialization failed.");
     } finally {
       setProcessingPayment(false);
@@ -58,33 +57,38 @@ function Checkout({ cart, user }) {
   };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px" }}>
-      <div style={{ background: "white", padding: "35px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
-        <h2>🔒 Secure Payment Gateway</h2>
-        <p style={{ color: "#64748b", fontSize: "0.9rem", marginBottom: "25px" }}>Logged in as: <b>{user.email}</b></p>
-        
+    <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: "30px", alignItems: "start" }}>
+      {/* PAYMENT CARD */}
+      <div style={{ background: "white", padding: "35px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+          <span style={{ fontSize: "1.4rem" }}>🔒</span>
+          <h2 style={{ margin: 0, color: "#0f172a" }}>Secure Payment</h2>
+        </div>
+        <p style={{ color: "#64748b", fontSize: "0.9rem", marginBottom: "25px" }}>
+          Logged in as <b style={{ color: "#334155" }}>{user.email}</b>
+        </p>
+
         {checkoutError && (
-          <div style={{ padding: "12px", background: "#fef2f2", color: "#b91c1c", borderRadius: "6px", marginBottom: "15px", fontSize: "0.9rem" }}>
+          <div style={{ padding: "12px", background: "#fef2f2", color: "#b91c1c", borderRadius: "8px", marginBottom: "15px", fontSize: "0.9rem", border: "1px solid #fecaca" }}>
             ⚠️ {checkoutError}
           </div>
         )}
 
         {paymentPrompt && (
-          <div style={{ padding: "14px", background: paymentPrompt.mode === "development" ? "#fffbeb" : "#ecfdf5", color: paymentPrompt.mode === "development" ? "#92400e" : "#166534", border: `1px solid ${paymentPrompt.mode === "development" ? "#fde68a" : "#bbf7d0"}`, borderRadius: "8px", marginBottom: "18px", fontSize: "0.92rem", lineHeight: "1.5" }}>
-            <strong>{paymentPrompt.mode === "development" ? "Payment staged" : "M-Pesa prompt sent"}</strong>
+          <div style={{ padding: "16px", background: paymentPrompt.mode === "development" ? "#fffbeb" : "#eff6ff", color: paymentPrompt.mode === "development" ? "#92400e" : "#1e40af", border: `1px solid ${paymentPrompt.mode === "development" ? "#fde68a" : "#bfdbfe"}`, borderRadius: "10px", marginBottom: "20px", fontSize: "0.92rem", lineHeight: "1.5" }}>
+            <strong>{paymentPrompt.mode === "development" ? "Payment staged" : "📲 M-Pesa prompt sent"}</strong>
             <br />
             {paymentPrompt.message}
             {paymentPrompt.checkoutRequestId && (
-              <span style={{ display: "block", marginTop: "6px", fontSize: "0.8rem", opacity: 0.8 }}>
+              <span style={{ display: "block", marginTop: "6px", fontSize: "0.8rem", opacity: 0.75 }}>
                 Checkout request: {paymentPrompt.checkoutRequestId}
               </span>
             )}
             <Button
               type="button"
-              variant="secondary"
               size="sm"
               onClick={() => navigate("/buyer/tickets")}
-              style={{ marginTop: "12px" }}
+              style={{ marginTop: "14px" }}
             >
               View My Tickets
             </Button>
@@ -92,23 +96,24 @@ function Checkout({ cart, user }) {
         )}
 
         <form onSubmit={triggerMpesaStkPush}>
-          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "15px", borderRadius: "8px", marginBottom: "20px" }}>
-            <label style={{ display: "block", fontWeight: "bold", color: "#166534", marginBottom: "5px" }}>Lipa na M-Pesa (STK Push)</label>
-            <input 
-              type="tel" 
-              required 
-              placeholder="e.g., 0712345678" 
+          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "16px", borderRadius: "10px", marginBottom: "22px" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "700", color: "#166534", marginBottom: "8px", fontSize: "0.95rem" }}>
+              <span style={{ fontSize: "1.1rem" }}>📱</span> Lipa na M-Pesa
+            </label>
+            <input
+              type="tel"
+              required
+              placeholder="e.g., 0712345678"
               value={phoneNumber}
               onChange={e => setPhoneNumber(e.target.value)}
-              style={{ width: "100%", padding: "12px", boxSizing: "border-box", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+              style={{ width: "100%", padding: "12px 14px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
             />
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             isLoading={processingPayment}
             loadingText="Sending M-Pesa prompt..."
-            variant="success"
             fullWidth
             size="lg"
           >
@@ -117,21 +122,50 @@ function Checkout({ cart, user }) {
         </form>
       </div>
 
-      <div style={{ background: "#f8fafc", padding: "35px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
-        <h3>Order Summary</h3>
-        <hr style={{ margin: "15px 0", borderColor: "#cbd5e1" }} />
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-          <span>Event:</span> <b>{cart.eventTitle}</b>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-          <span>Ticket Access Level:</span> <span>{cart.tierLabel}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-          <span>Quantity:</span> <span>{cart.quantity} Ticket(s)</span>
-        </div>
-        <hr style={{ margin: "15px 0", borderColor: "#cbd5e1" }} />
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "1.2rem", fontWeight: "bold" }}>
-          <span>Amount Due:</span> <span style={{ color: "#2563eb" }}>KES {cart.totalAmount?.toLocaleString()}</span>
+      {/* ORDER SUMMARY CARD */}
+      <div style={{ background: "white", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+        {cart.photoUrl ? (
+          <img
+            src={cart.photoUrl}
+            alt={cart.eventTitle}
+            style={{ width: "100%", height: "180px", objectFit: "cover", display: "block" }}
+          />
+        ) : (
+          <div style={{ width: "100%", height: "120px", background: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "1.4rem", fontWeight: "700" }}>
+            🎫 VibePass
+          </div>
+        )}
+
+        <div style={{ padding: "30px" }}>
+          <h3 style={{ marginTop: 0, marginBottom: "18px", color: "#0f172a" }}>Order Summary</h3>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "0.95rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "#64748b" }}>Event</span>
+              <b style={{ color: "#0f172a", textAlign: "right" }}>{cart.eventTitle}</b>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "#64748b" }}>Ticket Tier</span>
+              <span style={{ color: "#334155" }}>{cart.tierLabel}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "#64748b" }}>Quantity</span>
+              <span style={{ color: "#334155" }}>{cart.quantity} Ticket(s)</span>
+            </div>
+          </div>
+
+          <hr style={{ margin: "22px 0", border: "none", borderTop: "1px dashed #cbd5e1" }} />
+
+          <div style={{ background: "#eff6ff", padding: "18px", borderRadius: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontWeight: "600", color: "#1e40af" }}>Amount Due</span>
+            <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "#2563eb" }}>
+              KES {cart.totalAmount?.toLocaleString()}
+            </span>
+          </div>
+
+          <p style={{ marginTop: "20px", fontSize: "0.8rem", color: "#94a3b8", textAlign: "center" }}>
+            🔒 Payments are processed securely via M-Pesa
+          </p>
         </div>
       </div>
     </div>
