@@ -17,6 +17,8 @@ import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import VerifyTicket from "./pages/VerifyTicket.jsx";
 import AcceptTransfer from "./pages/AcceptTransfer.jsx";
+import TermsOfService from "./pages/TermsOfService.jsx";
+import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -285,13 +287,19 @@ function App() {
               <Route path="/t/:ticketId" element={<TicketPass />} />
               <Route path="/verify" element={<VerifyTicket />} />
 <Route path="/accept-transfer" element={<AcceptTransfer user={user} />} />
+<Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
 
             </Routes>
           </div>
-        </main>
+       </main>
+
+        <footer style={{ textAlign: "center", padding: "20px", color: "#94a3b8", fontSize: "0.8rem" }}>
+          <Link to="/terms" style={{ color: "#94a3b8", marginRight: "16px" }}>Terms of Service</Link>
+          <Link to="/privacy" style={{ color: "#94a3b8" }}>Privacy Policy</Link>
+        </footer>
       </div>
     </Router>
-  );
 }
 
 export default App;
