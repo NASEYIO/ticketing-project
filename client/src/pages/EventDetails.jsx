@@ -42,11 +42,12 @@ function EventDetails({ setCart }) {
   const remainingSpaces = activeTier ? (Number(activeTier.capacity) - Number(activeTier.sold)) : 0;
   const isSoldOut = !activeTier || remainingSpaces <= 0;
 
-  const handleCheckoutInitiation = () => {
+ const handleCheckoutInitiation = () => {
     if (!activeTier) return;
     setCart({
       eventId: event.id,
       eventTitle: event.title,
+      photoUrl: event.photoUrls && event.photoUrls.length > 0 ? event.photoUrls[0] : null,
       tierId: activeTier.id,
       tierLabel: activeTier.name,
       quantity: Number(qty),
@@ -58,7 +59,20 @@ function EventDetails({ setCart }) {
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "40px", alignItems: "start" }}>
-      <div style={{ background: "white", padding: "35px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
+    <div style={{ background: "white", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+        {event.photoUrls && event.photoUrls.length > 0 ? (
+          <img
+            src={event.photoUrls[0]}
+            alt={event.title}
+            style={{ width: "100%", height: "320px", objectFit: "cover", display: "block" }}
+          />
+        ) : (
+          <div style={{ width: "100%", height: "200px", background: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "1.6rem", fontWeight: "700" }}>
+            🎫 VibePass
+          </div>
+        )}
+
+        <div style={{ padding: "35px" }}>
         <span style={{ background: "#dbeafe", color: "#1e40af", padding: "6px 12px", borderRadius: "6px", fontSize: "0.85rem", fontWeight: "700" }}>
           VERIFIED LISTING
         </span>
@@ -67,8 +81,9 @@ function EventDetails({ setCart }) {
           📍 {event.venue} | 📅 {new Date(event.date).toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </p>
         <hr style={{ margin: "25px 0", borderColor: "#f1f5f9" }} />
-        <h3>About This Event</h3>
+       <h3>About This Event</h3>
         <p style={{ color: "#334155", lineHeight: "1.7", fontSize: "1.05rem", whiteSpace: "pre-wrap" }}>{event.description}</p>
+        </div>
       </div>
 
       <div style={{ background: "white", padding: "30px", borderRadius: "16px", border: "1px solid #e2e8f0", position: "sticky", top: "100px" }}>
