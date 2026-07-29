@@ -80,6 +80,15 @@ app.use((err, req, res, next) => {
   });
 });
 
+const cron = require('node-cron');
+const { cleanupAbandonedPayments } = require('./jobs/cleanupAbandonedPayments');
+
+// Run every 10 minutes, checking for payments abandoned 15+ minutes ago
+cron.schedule('*/10 * * * *', () => {
+  cleanupAbandonedPayments().catch((err) => {
+    console.error('Cleanup job failed:', err);
+  });
+});
 const PORT = process.env.PORT || 5000;
 
 // Only start listening on a real port when this file is run directly
