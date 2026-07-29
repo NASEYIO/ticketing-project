@@ -289,7 +289,6 @@ function App() {
 <Route path="/accept-transfer" element={<AcceptTransfer user={user} />} />
 <Route path="/terms" element={<TermsOfService />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
-
             </Routes>
           </div>
        </main>
@@ -300,6 +299,7 @@ function App() {
         </footer>
       </div>
     </Router>
+  );
 }
 
 export default App;
