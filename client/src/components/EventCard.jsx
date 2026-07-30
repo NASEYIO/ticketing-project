@@ -1,6 +1,7 @@
 // FILE: src/components/EventCard.jsx
 import { Link } from "react-router-dom";
 import Button from "./Button";
+import EventPhoto from "./EventPhoto";
 
 function EventCard({ event }) {
   const prices = event.tiers?.map(t => Number(t.price)) || [];
@@ -9,17 +10,7 @@ function EventCard({ event }) {
 
   return (
     <div style={{ background: "white", borderRadius: "12px", border: "1px solid #e2e8f0", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-      {coverPhoto ? (
-        <img
-          src={coverPhoto}
-          alt={event.title}
-          style={{ width: "100%", height: "160px", objectFit: "cover", display: "block" }}
-        />
-      ) : (
-        <div style={{ width: "100%", height: "160px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "0.8rem" }}>
-          No photo available
-        </div>
-      )}
+      <EventPhoto photoUrl={coverPhoto} title={event.title} height="160px" />
 
       <div style={{ padding: "20px" }}>
         <span style={{ fontSize: "0.75rem", color: "#2563eb", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em" }}>

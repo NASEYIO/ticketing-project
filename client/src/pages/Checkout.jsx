@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { api } from "../services/api";
 import Button from "../components/Button";
+import EventPhoto from "../components/EventPhoto";
 
 function Checkout({ cart, user }) {
   const navigate = useNavigate();
@@ -124,17 +125,8 @@ function Checkout({ cart, user }) {
 
       {/* ORDER SUMMARY CARD */}
       <div style={{ background: "white", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
-        {cart.photoUrl ? (
-          <img
-            src={cart.photoUrl}
-            alt={cart.eventTitle}
-            style={{ width: "100%", height: "180px", objectFit: "cover", display: "block" }}
-          />
-        ) : (
-          <div style={{ width: "100%", height: "120px", background: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "1.4rem", fontWeight: "700" }}>
-            🎫 VibePass
-          </div>
-        )}
+       <EventPhoto photoUrl={cart.photoUrl} title={cart.eventTitle} height="180px" />
+       
 
         <div style={{ padding: "30px" }}>
           <h3 style={{ marginTop: 0, marginBottom: "18px", color: "#0f172a" }}>Order Summary</h3>

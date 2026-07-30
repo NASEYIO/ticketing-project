@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { api } from "../services/api";
 import Button from "../components/Button";
+import EventPhoto from "../components/EventPhoto";
 
 function EventDetails({ setCart }) {
   const { id } = useParams();
@@ -60,17 +61,11 @@ function EventDetails({ setCart }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "40px", alignItems: "start" }}>
     <div style={{ background: "white", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-        {event.photoUrls && event.photoUrls.length > 0 ? (
-          <img
-            src={event.photoUrls[0]}
-            alt={event.title}
-            style={{ width: "100%", height: "320px", objectFit: "cover", display: "block" }}
-          />
-        ) : (
-          <div style={{ width: "100%", height: "200px", background: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "1.6rem", fontWeight: "700" }}>
-            🎫 VibePass
-          </div>
-        )}
+        <EventPhoto
+          photoUrl={event.photoUrls && event.photoUrls.length > 0 ? event.photoUrls[0] : null}
+          title={event.title}
+          height="320px"
+        />
 
         <div style={{ padding: "35px" }}>
         <span style={{ background: "#dbeafe", color: "#1e40af", padding: "6px 12px", borderRadius: "6px", fontSize: "0.85rem", fontWeight: "700" }}>
