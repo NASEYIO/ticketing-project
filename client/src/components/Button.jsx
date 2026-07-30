@@ -3,34 +3,40 @@ import React from "react";
 
 const VARIANTS = {
   primary: {
-    background: "#2563eb",
-    color: "white",
+    background: "var(--sol-yellow, #F7B500)",
+    color: "var(--sol-black, #121212)",
     border: "1px solid transparent",
-    hover: "#1d4ed8",
+    fontWeight: "700",
   },
 
   secondary: {
-    background: "white",
-    color: "#475569",
-    border: "1px solid #cbd5e1",
-    hover: "#f8fafc",
+    background: "var(--sol-card, #FFFFFF)",
+    color: "var(--text-h, #121212)",
+    border: "1px solid var(--border, #E5E2DC)",
+    fontWeight: "600",
   },
 
   danger: {
-    background: "#dc2626",
-    color: "white",
+    background: "var(--sol-red, #A62B1E)",
+    color: "#ffffff",
     border: "1px solid transparent",
-    hover: "#b91c1c",
+    fontWeight: "700",
   },
 
   success: {
     background: "#10b981",
-    color: "white",
+    color: "#ffffff",
     border: "1px solid transparent",
-    hover: "#059669",
+    fontWeight: "600",
+  },
+
+  outline: {
+    background: "transparent",
+    color: "var(--sol-yellow, #F7B500)",
+    border: "2px solid var(--sol-yellow, #F7B500)",
+    fontWeight: "700",
   }
 };
-
 
 const SIZES = {
   sm: {
@@ -52,31 +58,28 @@ const SIZES = {
   }
 };
 
-
 function Button({
   as: Component = "button",
   children,
-  variant="primary",
-  size="md",
-  isLoading=false,
-  loadingText="Loading...",
-  disabled=false,
-  fullWidth=false,
-  style={},
+  variant = "primary",
+  size = "md",
+  isLoading = false,
+  loadingText = "Loading...",
+  disabled = false,
+  fullWidth = false,
+  style = {},
   ...props
 }) {
 
   const currentVariant = VARIANTS[variant] || VARIANTS.primary;
   const currentSize = SIZES[size] || SIZES.md;
 
-
   const buttonStyle = {
-    display:"inline-flex",
-    alignItems:"center",
-    justifyContent:"center",
-    gap:"8px",
-
-    fontWeight:"600",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    fontFamily: "var(--sans)",
 
     cursor:
       disabled || isLoading
@@ -93,13 +96,12 @@ function Button({
       ? "100%"
       : "auto",
 
-    transition:"0.2s ease",
+    transition: "all 0.2s ease",
 
     ...currentVariant,
     ...currentSize,
     ...style
   };
-
 
   return (
     <Component
@@ -107,34 +109,28 @@ function Button({
       {...(Component === "button" ? { disabled: disabled || isLoading } : {})}
       style={buttonStyle}
     >
-
       {
         isLoading
-        ?
-        <>
-          <span
-            style={{
-              width:"16px",
-              height:"16px",
-              border:"2px solid currentColor",
-              borderTopColor:"transparent",
-              borderRadius:"50%",
-              display:"inline-block",
-              animation:"spin 0.8s linear infinite"
-            }}
-          />
-
-          {loadingText}
-        </>
-
-        :
-
-        children
+        ? (
+          <>
+            <span
+              style={{
+                width: "16px",
+                height: "16px",
+                border: "2px solid currentColor",
+                borderTopColor: "transparent",
+                borderRadius: "50%",
+                display: "inline-block",
+                animation: "spin 0.8s linear infinite"
+              }}
+            />
+            {loadingText}
+          </>
+        )
+        : children
       }
-
     </Component>
   );
 }
-
 
 export default Button;

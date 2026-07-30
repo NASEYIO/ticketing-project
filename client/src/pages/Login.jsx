@@ -67,19 +67,19 @@ const returnTo = searchParams.get("returnTo");
   };
 
   return (
-    <div style={{ maxWidth: "420px", margin: "60px auto", padding: "40px", background: "white", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05)" }}>
-      <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0" }}>Sign In</h2>
-      <p style={{ color: "#64748b", fontSize: "0.95rem", marginBottom: "30px" }}>Access ticket wallets, track sales inventory, or manage events</p>
+    <div style={{ maxWidth: "420px", margin: "60px auto", padding: "40px", background: "var(--sol-card)", borderRadius: "16px", border: "1px solid var(--border)", boxShadow: "var(--shadow)" }}>
+      <h2 style={{ fontSize: "1.8rem", margin: "0 0 8px 0", color: "var(--text-h)" }}>Sign In</h2>
+      <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", marginBottom: "30px" }}>Access ticket wallets, track sales inventory, or manage events</p>
 
       {errorMessage && (
-        <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "12px", borderRadius: "8px", fontSize: "0.9rem", marginBottom: "20px", fontWeight: "500" }}>
+        <div style={{ background: "rgba(166,43,30,0.08)", border: "1px solid rgba(166,43,30,0.3)", color: "var(--sol-red, #A62B1E)", padding: "12px", borderRadius: "8px", fontSize: "0.9rem", marginBottom: "20px", fontWeight: "500" }}>
           ⚠️ {errorMessage}
         </div>
       )}
 
       <form onSubmit={handleIdentitySubmission} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         <div>
-          <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Email or Username</label>
+          <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600", color: "var(--text-h)" }}>Email or Username</label>
           <input
             type="text"
             required
@@ -87,14 +87,14 @@ const returnTo = searchParams.get("returnTo");
             placeholder="Enter your email or username"
             value={identifier}
             onChange={e => setIdentifier(e.target.value)}
-            style={{ width: "100%", padding: "12px 16px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+            style={{ width: "100%", padding: "12px 16px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text-h)", fontSize: "1rem" }}
           />
         </div>
 
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-            <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#334155" }}>Password</label>
-           <Link to="/forgot-password" style={{ fontSize: "0.85rem", color: "#2563eb", textDecoration: "none" }}>Forgot?</Link>
+            <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--text-h)" }}>Password</label>
+           <Link to="/forgot-password" style={{ fontSize: "0.85rem", color: "var(--accent)", textDecoration: "none" }}>Forgot?</Link>
           </div>
           <div style={{ position: "relative" }}>
             <input
@@ -110,7 +110,9 @@ const returnTo = searchParams.get("returnTo");
                 paddingRight: "45px",
                 boxSizing: "border-box",
                 borderRadius: "8px",
-                border: "1px solid #cbd5e1",
+                border: "1px solid var(--border)",
+                background: "var(--bg)",
+                color: "var(--text-h)",
                 fontSize: "1rem"
               }}
             />
@@ -125,7 +127,7 @@ const returnTo = searchParams.get("returnTo");
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
-                color: "#64748b",
+                color: "var(--text-muted)",
                 fontSize: "1.2rem",
                 padding: "4px"
               }}

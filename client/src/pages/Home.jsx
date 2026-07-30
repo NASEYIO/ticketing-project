@@ -1,4 +1,4 @@
-﻿/// FILE: src/pages/Home.jsx
+﻿// FILE: src/pages/Home.jsx
 import { useState, useEffect } from "react";
 import EventCard from "../components/EventCard";
 import { api } from "../services/api";
@@ -19,12 +19,12 @@ function Home() {
     "Parties"
   ];
 
- useEffect(() => {
+  useEffect(() => {
     const fetchLiveEvents = async () => {
       try {
         const responseData = await api.getEvents();
         
-        // 💡 Checks if responseData is the array, or if the array is nested inside a property
+        // Checks if responseData is the array, or if the array is nested inside a property
         if (Array.isArray(responseData)) {
           setEvents(responseData);
         } else if (responseData && Array.isArray(responseData.events)) {
@@ -45,7 +45,8 @@ function Home() {
 
     fetchLiveEvents();
   }, []);
-const filteredEvents = (events || []).filter(event => {
+
+  const filteredEvents = (events || []).filter(event => {
     const titleString = event.title || "";
     const venueString = event.venue || "";
     
@@ -53,8 +54,6 @@ const filteredEvents = (events || []).filter(event => {
       titleString.toLowerCase().includes(search.toLowerCase()) ||
       venueString.toLowerCase().includes(search.toLowerCase());
 
-    // 💡 Completely bulletproof fallback: if activeCategory is 'All', immediately match.
-    // Otherwise, check if the string matches loosely or if the category object name matches.
     if (activeCategory === "All") return matchesSearch;
 
     const currentActive = activeCategory.toLowerCase();
@@ -68,79 +67,121 @@ const filteredEvents = (events || []).filter(event => {
 
     return matchesSearch && matchesCategory;
   });
+
   return (
     <div style={{ width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
 
-      {/* Hero Card */}
+      {/* Hero — uses themed CSS variables so it flips with light/dark */}
       <div
         style={{
-          background: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%)",
+          background: "linear-gradient(135deg, var(--header-bg) 0%, var(--bg-secondary) 100%)",
           borderRadius: "16px",
-          padding: "40px 20px", /* Slightly brought down side padding for clean mobile edges */
-          color: "white",
-          marginBottom: "40px",
+          padding: "40px 20px",
+          marginBottom: "32px",
           width: "100%",
-          boxSizing: "border-box", /* Keeps internal items locked inside */
+          boxSizing: "border-box",
+          border: "1px solid var(--border)",
+          boxShadow: "var(--shadow)",
+          transition: "background 0.3s ease, border-color 0.3s ease"
         }}
       >
-        <h1
+        <span
           style={{
-            fontSize: "2.2rem", /* Reduced text size slightly to look sharp on small screens */
-            margin: "0 0 10px 0",
-            fontWeight: "800"
+            background: "rgba(247, 181, 0, 0.12)",
+            color: "var(--sol-yellow, #F7B500)",
+            padding: "4px 12px",
+            borderRadius: "20px",
+            fontSize: "0.8rem",
+            fontWeight: "700",
+            letterSpacing: "0.5px",
+            textTransform: "uppercase",
+            border: "1px solid rgba(247, 181, 0, 0.25)",
+            display: "inline-block",
+            marginBottom: "12px",
           }}
         >
-          Find Your Next Vibe
+          ☀️ Sauti Sol Live Experience
+        </span>
+
+        <h1
+          style={{
+            fontSize: "2.2rem",
+            margin: "0 0 10px 0",
+            fontWeight: "800",
+            lineHeight: "1.2",
+            color: "var(--sol-cream, #FAF8F5)"
+          }}
+        >
+          Find Your Next <span style={{ color: "var(--sol-yellow, #F7B500)" }}>Vibe</span>
         </h1>
 
         <p
           style={{
             fontSize: "1.05rem",
-            opacity: 0.9,
-            marginBottom: "30px"
+            color: "var(--sol-cream, #FAF8F5)",
+            opacity: 0.85,
+            marginBottom: "24px",
+            maxWidth: "600px"
           }}
         >
           Discover verified events across East Africa. Instant tickets delivered via SMS and Email.
         </p>
 
-        {/* Fixed Search Bar Input */}
+        {/* Search Bar Input */}
         <input
           type="text"
           placeholder="🔍 Search events, artists, venues or cities..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          className="hero-search"
           style={{
             width: "100%",
             maxWidth: "100%",
             padding: "16px 20px",
             borderRadius: "12px",
-            border: "none",
+            border: "1px solid rgba(247, 181, 0, 0.45)",
+            background: "rgba(0, 0, 0, 0.25)",
+            color: "#FAF8F5",
             fontSize: "1rem",
-            boxSizing: "border-box", /* CRUCIAL: Keeps search input completely inside blue area */
+            boxSizing: "border-box",
+            outline: "none",
+            transition: "border-color 0.2s ease"
           }}
         />
-<a href="/VibePass.apk" download style={{display:"inline-block",marginTop:"16px",padding:"12px 20px",background:"white",color:"#2563eb",borderRadius:"10px",fontWeight:"700",fontSize:"0.9rem",textDecoration:"none"}}>Download Android App</a>
 
-
-
-
-
-
-
-
+        <div style={{ marginTop: "16px" }}>
+          <a
+            href="/VibePass.apk"
+            download
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 18px",
+              background: "var(--sol-yellow, #F7B500)",
+              color: "#1A1200",
+              borderRadius: "10px",
+              fontWeight: "700",
+              fontSize: "0.9rem",
+              textDecoration: "none",
+              transition: "transform 0.2s ease",
+            }}
+          >
+            <span>📱</span> Download Android App
+          </a>
+        </div>
       </div>
 
       {/* Category List */}
       <div
         style={{
           display: "flex",
-          gap: "12px",
+          gap: "10px",
           marginBottom: "30px",
           overflowX: "auto",
           width: "100%",
           paddingBottom: "8px"
         }}
-        
       >
         {categories.map(cat => (
           <Button
@@ -148,7 +189,7 @@ const filteredEvents = (events || []).filter(event => {
             onClick={() => setActiveCategory(cat)}
             variant={activeCategory === cat ? "primary" : "secondary"}
             size="sm"
-             className="category-pill"
+            className="category-pill"
             style={{
               borderRadius: "24px",
               whiteSpace: "nowrap"
@@ -159,7 +200,9 @@ const filteredEvents = (events || []).filter(event => {
         ))}
       </div>
 
-      <h2>Live Events</h2>
+      <h2 style={{ fontSize: "1.5rem", fontWeight: "700", color: "var(--text-h, #121212)", marginBottom: "16px" }}>
+        Live Events
+      </h2>
 
       {isLoading && (
         <p style={{ color: "#64748b" }}>
@@ -171,8 +214,9 @@ const filteredEvents = (events || []).filter(event => {
         <div
           style={{
             padding: "15px",
-            background: "#fef2f2",
-            color: "#b91c1c",
+            background: "rgba(166, 43, 30, 0.1)",
+            color: "var(--sol-red, #A62B1E)",
+            border: "1px solid var(--sol-red, #A62B1E)",
             borderRadius: "8px",
             width: "100%",
             boxSizing: "border-box"
@@ -186,7 +230,7 @@ const filteredEvents = (events || []).filter(event => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
             gap: "24px",
             marginTop: "20px",
             width: "100%"

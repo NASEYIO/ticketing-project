@@ -13,6 +13,7 @@ import EditEvent from "./pages/EditEvent.jsx";
 import AdminPanel from "./pages/AdminPanel.jsx";
 import TicketPass from "./pages/TicketPass.jsx";
 import Button from "./components/Button.jsx";
+import ThemeToggle from "./components/ThemeToggle.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import VerifyTicket from "./pages/VerifyTicket.jsx";
@@ -45,7 +46,7 @@ function App() {
     }
   }, []);
 
- const logout = () => {
+  const logout = () => {
     const confirmLogout = window.confirm("Are you sure you want to log out?");
     if (!confirmLogout) return;
 
@@ -57,36 +58,38 @@ function App() {
 
   return (
     <Router>
-      {/* Main wrapper: Enforces strict screen boundaries on mobile devices */}
+      {/* Main wrapper: Uses Sauti Sol theme dark/light background */}
       <div
         style={{
-          fontFamily: "Inter, system-ui, sans-serif",
-          background: "#f8fafc",
+          fontFamily: "var(--sans)",
+          background: "var(--bg)",
           minHeight: "100vh",
           width: "100%",
-          maxWidth: "100vw",       /* Prevents menu from making the page too wide */
-          overflowX: "hidden",     /* Cuts off accidental horizontal screen scrolling */
-          color: "#0f172a",
+          maxWidth: "100vw",
+          overflowX: "hidden",
+          color: "var(--text)",
           display: "flex",
           flexDirection: "column",
-          boxSizing: "border-box"
+          boxSizing: "border-box",
+          transition: "background 0.3s ease, color 0.3s ease"
         }}
       >
-        {/* HEADER: Stays at top */}
-       <header
+        {/* HEADER */}
+        <header
           style={{
-            background: "#ffffff",
-            padding: "12px 15px", 
+            background: "var(--header-bg)",
+            padding: "12px 20px", 
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            borderBottom: "1px solid #e2e8f0",
+            borderBottom: "1px solid var(--border)",
             position: "sticky",
             top: 0,
             zIndex: 50,
             gap: "10px",
             width: "100%",
-            boxSizing: "border-box"
+            boxSizing: "border-box",
+            transition: "background 0.3s ease, border-color 0.3s ease"
           }}
         >
           <div className="brand-block" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -94,23 +97,24 @@ function App() {
               to="/"
               className="brand-logo"
               style={{
-                fontSize: "1.2rem", 
+                fontSize: "1.25rem", 
                 fontWeight: "800",
-                color: "#2563eb",
+                color: "var(--sol-cream, #FAF8F5)",
                 textDecoration: "none",
-                letterSpacing: "-0.05em",
+                letterSpacing: "-0.03em",
               }}
             >
-              🎫 VibePass
+              🎫 Vibe<span style={{ color: "var(--sol-yellow, #F7B500)" }}>Pass</span>
             </Link>
             <span
               className="location-badge"
               style={{
-                background: "#f1f5f9",
-                padding: "4px 8px",
+                background: "rgba(247, 181, 0, 0.15)",
+                border: "1px solid rgba(247, 181, 0, 0.3)",
+                padding: "4px 10px",
                 borderRadius: "20px",
                 fontSize: "0.7rem",
-                color: "#475569",
+                color: "var(--sol-yellow, #F7B500)",
                 fontWeight: "600",
               }}
             >
@@ -122,7 +126,7 @@ function App() {
             className="main-nav"
             style={{
               display: "flex",
-              gap: "8px",
+              gap: "12px",
               alignItems: "center",
               overflowX: "auto",
               maxWidth: "100%",
@@ -130,19 +134,28 @@ function App() {
               WebkitOverflowScrolling: "touch"
             }}
           >
-            <Button
-              as={Link}
+            <Link
               to="/"
-              variant="secondary"
-              size="sm"
-              className="nav-btn"
-              style={{ textDecoration: "none", whiteSpace: "nowrap" }}
+              style={{
+                color: "var(--sol-cream, #FAF8F5)",
+                textDecoration: "none",
+                fontWeight: "600",
+                fontSize: "0.85rem",
+                whiteSpace: "nowrap"
+              }}
             >
               Explore
-            </Button>
-<Link
+            </Link>
+
+            <Link
               to="/verify"
-              style={{ color: "#475569", textDecoration: "none", fontWeight: "500", fontSize: "0.85rem", whiteSpace: "nowrap" }}
+              style={{
+                color: "var(--sol-cream, #FAF8F5)",
+                textDecoration: "none",
+                fontWeight: "500",
+                fontSize: "0.85rem",
+                whiteSpace: "nowrap"
+              }}
             >
               Verify Ticket
             </Link>
@@ -150,10 +163,10 @@ function App() {
             {!user && (
               <>
                 <Link
-                  to="/Login"
+                  to="/login"
                   className="nav-link"
                   style={{
-                    color: "#475569",
+                    color: "var(--sol-cream, #FAF8F5)",
                     textDecoration: "none",
                     fontWeight: "500",
                     fontSize: "0.85rem",
@@ -163,10 +176,10 @@ function App() {
                   Organize
                 </Link>
                 <Link
-                  to="/Login"
+                  to="/login"
                   className="nav-link"
                   style={{
-                    color: "#475569",
+                    color: "var(--sol-cream, #FAF8F5)",
                     textDecoration: "none",
                     fontWeight: "500",
                     fontSize: "0.85rem",
@@ -180,7 +193,15 @@ function App() {
                   to="/register"
                   size="sm"
                   className="nav-btn"
-                  style={{ textDecoration: "none", whiteSpace: "nowrap" }}
+                  style={{
+                    background: "var(--sol-yellow, #F7B500)",
+                    color: "var(--sol-black, #121212)",
+                    fontWeight: "700",
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                    border: "none",
+                    borderRadius: "8px"
+                  }}
                 >
                   Sign Up
                 </Button>
@@ -193,7 +214,7 @@ function App() {
                   to="/buyer/tickets"
                   className="nav-link"
                   style={{
-                    color: "#2563eb",
+                    color: "var(--sol-yellow, #F7B500)",
                     textDecoration: "none",
                     fontWeight: "600",
                     fontSize: "0.85rem",
@@ -217,8 +238,9 @@ function App() {
                   size="sm"
                   className="nav-btn"
                   style={{
-                    background: "#f59e0b",
-                    color: "#1e293b",
+                    background: "var(--sol-yellow, #F7B500)",
+                    color: "var(--sol-black, #121212)",
+                    fontWeight: "700",
                     borderColor: "transparent",
                     textDecoration: "none",
                     whiteSpace: "nowrap"
@@ -240,7 +262,12 @@ function App() {
                   variant="danger"
                   size="sm"
                   className="nav-btn"
-                  style={{ textDecoration: "none", whiteSpace: "nowrap" }}
+                  style={{
+                    background: "var(--sol-red, #A62B1E)",
+                    color: "#ffffff",
+                    textDecoration: "none",
+                    whiteSpace: "nowrap"
+                  }}
                 >
                   Admin Panel
                 </Button>
@@ -249,6 +276,9 @@ function App() {
                 </Button>
               </>
             )}
+
+            {/* ── Theme toggle ── always visible, rightmost nav item ── */}
+            <ThemeToggle />
           </nav>
         </header>
 
@@ -257,7 +287,7 @@ function App() {
           style={{
             flex: 1, 
             display: "flex",
-            justifyContent: "center", /* Horizontally centers content wrapper */
+            justifyContent: "center",
             padding: "20px 12px", 
             width: "100%",
             boxSizing: "border-box", 
@@ -275,9 +305,8 @@ function App() {
               <Route path="/event/:id" element={<EventDetails setCart={setCart} />} />
               <Route path="/checkout" element={<Checkout cart={cart} setCart={setCart} user={user} setUser={setUser} />} />
               <Route path="/login" element={<Login setUser={setUser} cart={cart} />} />
-<Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-
               <Route path="/register" element={<Register setUser={setUser} />} />
               <Route path="/buyer/tickets" element={<MyTickets user={user} />} />
               <Route path="/organizer/dashboard" element={<OrganizerDashboard user={user} />} />
@@ -286,16 +315,17 @@ function App() {
               <Route path="/admin" element={<AdminPanel user={user} />} />
               <Route path="/t/:ticketId" element={<TicketPass />} />
               <Route path="/verify" element={<VerifyTicket />} />
-<Route path="/accept-transfer" element={<AcceptTransfer user={user} />} />
-<Route path="/terms" element={<TermsOfService />} />
+              <Route path="/accept-transfer" element={<AcceptTransfer user={user} />} />
+              <Route path="/terms" element={<TermsOfService />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
             </Routes>
           </div>
-       </main>
+        </main>
 
-        <footer style={{ textAlign: "center", padding: "20px", color: "#94a3b8", fontSize: "0.8rem" }}>
-          <Link to="/terms" style={{ color: "#94a3b8", marginRight: "16px" }}>Terms of Service</Link>
-          <Link to="/privacy" style={{ color: "#94a3b8" }}>Privacy Policy</Link>
+        {/* FOOTER */}
+        <footer style={{ textAlign: "center", padding: "24px 20px", color: "var(--text)", fontSize: "0.85rem", borderTop: "1px solid var(--border)" }}>
+          <Link to="/terms" style={{ color: "var(--text)", marginRight: "16px", textDecoration: "none" }}>Terms of Service</Link>
+          <Link to="/privacy" style={{ color: "var(--text)", textDecoration: "none" }}>Privacy Policy</Link>
         </footer>
       </div>
     </Router>

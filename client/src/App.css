@@ -210,6 +210,11 @@
     font-size: 0.75rem !important;
   }
 
+  /* Hide the "Dark"/"Light" text on tiny screens, keep just the track */
+  .theme-toggle-label {
+    display: none;
+  }
+
   h1 {
     font-size: 1.6rem !important;
   }

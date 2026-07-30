@@ -189,4 +189,74 @@ router.get('/:id', authenticateToken, async (req, res, next) => {
     next(error);
   }
 });
+
+router.get('/event/:eventId/codes', authenticateToken, requireRole(['ORGANIZER', 'ADMIN']), async (req, res, next) => {
+  try {
+    const event = await prisma.event.findUnique({ where: { id: req.params.eventId } });
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found.' });
+    }
+
+    if (event.organizerId !== req.user.id && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'You do not have permission to access this event.' });
+    }
+
+    const tickets = await prisma.ticket.findMany({
+      where: { eventId: req.params.eventId },
+      select: { secretCode: true, status: true },
+    });
+
+    return res.status(200).json({ eventTitle: event.title, tickets });
+  } catch (error) {
+    console.error('Get offline codes error:', error);
+    next(error);
+  }
+});
+
+
+router.post('/sync-offline-scans', authenticateToken, requireRole(['ORGANIZER', 'ADMIN']), async (req, res, next) => {
+  const { scans } = req.body; // array of { secretCode, scannedAt }
+
+  try {
+    if (!Array.isArray(scans) || scans.length === 0) {
+      return res.status(400).json({ error: 'No scans provided.' });
+    }
+
+    const results = [];
+
+    for (const scan of scans) {
+      const ticket = await prisma.ticket.findFirst({ where: { secretCode: scan.secretCode } });
+
+      if (!ticket) {
+        results.push({ secretCode: scan.secretCode, outcome: 'NOT_FOUND' });
+        continue;
+      }
+
+      if (ticket.status === 'USED') {
+        // Could be a genuine duplicate scan, or two offline devices
+        // scanned the same ticket before either could sync.
+        results.push({ secretCode: scan.secretCode, outcome: 'ALREADY_USED' });
+        continue;
+      }
+
+      if (ticket.status !== 'ACTIVE') {
+        results.push({ secretCode: scan.secretCode, outcome: 'INVALID_STATUS', status: ticket.status });
+        continue;
+      }
+
+      await prisma.ticket.update({
+        where: { id: ticket.id },
+        data: { status: 'USED', scannedAt: new Date(scan.scannedAt) || new Date() },
+      });
+
+      results.push({ secretCode: scan.secretCode, outcome: 'SYNCED' });
+    }
+
+    return res.status(200).json({ results });
+  } catch (error) {
+    console.error('Sync offline scans error:', error);
+    next(error);
+  }
+});
 module.exports = router;

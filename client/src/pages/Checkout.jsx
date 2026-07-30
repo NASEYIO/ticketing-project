@@ -14,18 +14,51 @@ function Checkout({ cart, user }) {
 
   if (!cart) {
     return (
-      <div style={{ textAlign: "center", padding: "40px" }}>
-        <h3>Your checkout session expired or is empty. Please select an event first.</h3>
+      <div 
+        style={{ 
+          textAlign: "center", 
+          padding: "60px 20px", 
+          background: "var(--sol-card, #FFFFFF)", 
+          borderRadius: "16px", 
+          border: "1px solid var(--border, #E5E2DC)",
+          maxWidth: "600px",
+          margin: "40px auto"
+        }}
+      >
+        <h3 style={{ color: "var(--text-h, #121212)", fontWeight: "700" }}>
+          Your checkout session expired or is empty.
+        </h3>
+        <p style={{ color: "var(--text-subtle, #666666)", marginBottom: "24px" }}>
+          Please select an event ticket first to proceed.
+        </p>
+        <Button onClick={() => navigate("/")} variant="primary">
+          Browse Events
+        </Button>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div style={{ maxWidth: "500px", margin: "0 auto", textAlign: "center", background: "white", padding: "40px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
-        <h2>Almost there! Account Needed</h2>
-        <p style={{ color: "#64748b", marginBottom: "30px" }}>To secure your tickets and deliver your QR access passes, please log in instantly below.</p>
-        <Button onClick={() => navigate("/login")} fullWidth size="lg">
+      <div 
+        style={{ 
+          maxWidth: "500px", 
+          margin: "40px auto", 
+          textAlign: "center", 
+          background: "var(--sol-card, #FFFFFF)", 
+          padding: "40px 30px", 
+          borderRadius: "16px", 
+          border: "1px solid var(--border, #E5E2DC)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.04)"
+        }}
+      >
+        <h2 style={{ color: "var(--text-h, #121212)", fontWeight: "800", marginTop: 0 }}>
+          Almost there! Account Needed
+        </h2>
+        <p style={{ color: "var(--text-subtle, #666666)", marginBottom: "30px", lineHeight: "1.5" }}>
+          To secure your tickets and deliver your QR access passes, please log in or create an account below.
+        </p>
+        <Button onClick={() => navigate("/login")} fullWidth size="lg" variant="primary">
           Sign In / Create Account to Finish Payment
         </Button>
       </div>
@@ -58,36 +91,71 @@ function Checkout({ cart, user }) {
   };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: "30px", alignItems: "start" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "32px", alignItems: "start" }}>
       {/* PAYMENT CARD */}
-      <div style={{ background: "white", padding: "35px", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+      <div 
+        style={{ 
+          background: "var(--sol-card, #FFFFFF)", 
+          padding: "32px", 
+          borderRadius: "16px", 
+          border: "1px solid var(--border, #E5E2DC)", 
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.04)" 
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
           <span style={{ fontSize: "1.4rem" }}>🔒</span>
-          <h2 style={{ margin: 0, color: "#0f172a" }}>Secure Payment</h2>
+          <h2 style={{ margin: 0, color: "var(--text-h, #121212)", fontWeight: "800" }}>
+            Secure Payment
+          </h2>
         </div>
-        <p style={{ color: "#64748b", fontSize: "0.9rem", marginBottom: "25px" }}>
-          Logged in as <b style={{ color: "#334155" }}>{user.email}</b>
+        
+        <p style={{ color: "var(--text-subtle, #666666)", fontSize: "0.9rem", marginBottom: "24px" }}>
+          Logged in as <b style={{ color: "var(--text-h, #121212)" }}>{user.email}</b>
         </p>
 
         {checkoutError && (
-          <div style={{ padding: "12px", background: "#fef2f2", color: "#b91c1c", borderRadius: "8px", marginBottom: "15px", fontSize: "0.9rem", border: "1px solid #fecaca" }}>
+          <div 
+            style={{ 
+              padding: "14px", 
+              background: "rgba(166, 43, 30, 0.08)", 
+              color: "var(--sol-red, #A62B1E)", 
+              borderRadius: "10px", 
+              marginBottom: "20px", 
+              fontSize: "0.9rem", 
+              border: "1px solid rgba(166, 43, 30, 0.2)" 
+            }}
+          >
             ⚠️ {checkoutError}
           </div>
         )}
 
         {paymentPrompt && (
-          <div style={{ padding: "16px", background: paymentPrompt.mode === "development" ? "#fffbeb" : "#eff6ff", color: paymentPrompt.mode === "development" ? "#92400e" : "#1e40af", border: `1px solid ${paymentPrompt.mode === "development" ? "#fde68a" : "#bfdbfe"}`, borderRadius: "10px", marginBottom: "20px", fontSize: "0.92rem", lineHeight: "1.5" }}>
-            <strong>{paymentPrompt.mode === "development" ? "Payment staged" : "📲 M-Pesa prompt sent"}</strong>
+          <div 
+            style={{ 
+              padding: "18px", 
+              background: paymentPrompt.mode === "development" ? "rgba(247, 181, 0, 0.1)" : "rgba(247, 181, 0, 0.15)", 
+              color: "var(--text-h, #121212)", 
+              border: "1px solid var(--sol-yellow, #F7B500)", 
+              borderRadius: "12px", 
+              marginBottom: "24px", 
+              fontSize: "0.92rem", 
+              lineHeight: "1.5" 
+            }}
+          >
+            <strong style={{ color: "var(--sol-yellow, #F7B500)" }}>
+              {paymentPrompt.mode === "development" ? "⚡ Payment staged" : "📲 M-Pesa prompt sent"}
+            </strong>
             <br />
             {paymentPrompt.message}
             {paymentPrompt.checkoutRequestId && (
-              <span style={{ display: "block", marginTop: "6px", fontSize: "0.8rem", opacity: 0.75 }}>
+              <span style={{ display: "block", marginTop: "6px", fontSize: "0.8rem", color: "var(--text-subtle, #666666)" }}>
                 Checkout request: {paymentPrompt.checkoutRequestId}
               </span>
             )}
             <Button
               type="button"
               size="sm"
+              variant="outline"
               onClick={() => navigate("/buyer/tickets")}
               style={{ marginTop: "14px" }}
             >
@@ -97,8 +165,26 @@ function Checkout({ cart, user }) {
         )}
 
         <form onSubmit={triggerMpesaStkPush}>
-          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "16px", borderRadius: "10px", marginBottom: "22px" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "700", color: "#166534", marginBottom: "8px", fontSize: "0.95rem" }}>
+          <div 
+            style={{ 
+              background: "rgba(247, 181, 0, 0.05)", 
+              border: "1px solid var(--border, #E5E2DC)", 
+              padding: "18px", 
+              borderRadius: "12px", 
+              marginBottom: "24px" 
+            }}
+          >
+            <label 
+              style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "6px", 
+                fontWeight: "700", 
+                color: "var(--text-h, #121212)", 
+                marginBottom: "8px", 
+                fontSize: "0.95rem" 
+              }}
+            >
               <span style={{ fontSize: "1.1rem" }}>📱</span> Lipa na M-Pesa
             </label>
             <input
@@ -107,7 +193,17 @@ function Checkout({ cart, user }) {
               placeholder="e.g., 0712345678"
               value={phoneNumber}
               onChange={e => setPhoneNumber(e.target.value)}
-              style={{ width: "100%", padding: "12px 14px", boxSizing: "border-box", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "1rem" }}
+              style={{ 
+                width: "100%", 
+                padding: "12px 14px", 
+                boxSizing: "border-box", 
+                borderRadius: "8px", 
+                border: "1px solid var(--border, #E5E2DC)", 
+                background: "var(--sol-card, #FFFFFF)",
+                color: "var(--text-h, #121212)",
+                fontSize: "1rem",
+                outline: "none" 
+              }}
             />
           </div>
 
@@ -117,6 +213,7 @@ function Checkout({ cart, user }) {
             loadingText="Sending M-Pesa prompt..."
             fullWidth
             size="lg"
+            variant="primary"
           >
             Pay KES {cart.totalAmount?.toLocaleString()}
           </Button>
@@ -124,38 +221,57 @@ function Checkout({ cart, user }) {
       </div>
 
       {/* ORDER SUMMARY CARD */}
-      <div style={{ background: "white", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
-       <EventPhoto photoUrl={cart.photoUrl} title={cart.eventTitle} height="180px" />
-       
+      <div 
+        style={{ 
+          background: "var(--sol-card, #FFFFFF)", 
+          borderRadius: "16px", 
+          border: "1px solid var(--border, #E5E2DC)", 
+          overflow: "hidden", 
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.04)" 
+        }}
+      >
+        <EventPhoto photoUrl={cart.photoUrl} title={cart.eventTitle} height="180px" />
 
-        <div style={{ padding: "30px" }}>
-          <h3 style={{ marginTop: 0, marginBottom: "18px", color: "#0f172a" }}>Order Summary</h3>
+        <div style={{ padding: "28px" }}>
+          <h3 style={{ marginTop: 0, marginBottom: "20px", color: "var(--text-h, #121212)", fontSize: "1.25rem", fontWeight: "800" }}>
+            Order Summary
+          </h3>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "0.95rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontSize: "0.95rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#64748b" }}>Event</span>
-              <b style={{ color: "#0f172a", textAlign: "right" }}>{cart.eventTitle}</b>
+              <span style={{ color: "var(--text-subtle, #666666)" }}>Event</span>
+              <b style={{ color: "var(--text-h, #121212)", textAlign: "right" }}>{cart.eventTitle}</b>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#64748b" }}>Ticket Tier</span>
-              <span style={{ color: "#334155" }}>{cart.tierLabel}</span>
+              <span style={{ color: "var(--text-subtle, #666666)" }}>Ticket Tier</span>
+              <span style={{ color: "var(--text-h, #121212)", fontWeight: "600" }}>{cart.tierLabel}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#64748b" }}>Quantity</span>
-              <span style={{ color: "#334155" }}>{cart.quantity} Ticket(s)</span>
+              <span style={{ color: "var(--text-subtle, #666666)" }}>Quantity</span>
+              <span style={{ color: "var(--text-h, #121212)", fontWeight: "600" }}>{cart.quantity} Ticket(s)</span>
             </div>
           </div>
 
-          <hr style={{ margin: "22px 0", border: "none", borderTop: "1px dashed #cbd5e1" }} />
+          <hr style={{ margin: "24px 0", border: "none", borderTop: "1px dashed var(--border, #E5E2DC)" }} />
 
-          <div style={{ background: "#eff6ff", padding: "18px", borderRadius: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontWeight: "600", color: "#1e40af" }}>Amount Due</span>
-            <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "#2563eb" }}>
+          <div 
+            style={{ 
+              background: "rgba(247, 181, 0, 0.08)", 
+              padding: "20px", 
+              borderRadius: "12px", 
+              border: "1px solid rgba(247, 181, 0, 0.2)",
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center" 
+            }}
+          >
+            <span style={{ fontWeight: "700", color: "var(--text-h, #121212)" }}>Amount Due</span>
+            <span style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--sol-yellow, #F7B500)" }}>
               KES {cart.totalAmount?.toLocaleString()}
             </span>
           </div>
 
-          <p style={{ marginTop: "20px", fontSize: "0.8rem", color: "#94a3b8", textAlign: "center" }}>
+          <p style={{ marginTop: "20px", fontSize: "0.8rem", color: "var(--text-subtle, #666666)", textAlign: "center", margin: "20px 0 0 0" }}>
             🔒 Payments are processed securely via M-Pesa
           </p>
         </div>

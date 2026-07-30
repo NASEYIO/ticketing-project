@@ -25,17 +25,13 @@ function Sidebar() {
 
 
 const sideStyle = {
-
   width: "200px",
-
   height: "100vh",
-
   padding: "20px",
-
-  background: "#FFFDD0",   // cream color
-
-  color: "#111827",        // dark text
-
+  background: "var(--bg, #FAF8F5)",
+  color: "var(--text-h, #121212)",
+  borderRight: "1px solid var(--border, #E5E2DC)",
+  boxSizing: "border-box",
 };
 
 

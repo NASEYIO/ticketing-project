@@ -45,29 +45,43 @@ const [searchParams] = useSearchParams();
     }
   };
 
+  const inputStyle = {
+    padding: "10px 14px",
+    borderRadius: "6px",
+    border: "1px solid var(--border)",
+    background: "var(--bg)",
+    color: "var(--text-h)",
+    fontSize: "1rem",
+    outline: "none",
+    width: "100%",
+    boxSizing: "border-box"
+  };
+
   return (
     <div
       style={{
         maxWidth: "400px",
         margin: "60px auto",
         padding: "30px",
-        background: "white",
+        background: "var(--sol-card)",
         borderRadius: "12px",
-        border: "1px solid #e2e8f0"
+        border: "1px solid var(--border)",
+        boxShadow: "var(--shadow)"
       }}
     >
-      <h2 style={{ textAlign: "center" }}>Create VibePass Account</h2>
-      <p style={{ textAlign: "center", color: "#64748b" }}>
+      <h2 style={{ textAlign: "center", color: "var(--text-h)" }}>Create VibePass Account</h2>
+      <p style={{ textAlign: "center", color: "var(--text-muted)" }}>
         Enter your credentials to manage and secure your passes.
       </p>
 
       {error && (
         <p
           style={{
-            color: "#b91c1c",
-            background: "#fef2f2",
+            color: "var(--sol-red, #A62B1E)",
+            background: "rgba(166,43,30,0.08)",
             padding: "10px",
-            borderRadius: "6px"
+            borderRadius: "6px",
+            border: "1px solid rgba(166,43,30,0.25)"
           }}
         >
           ⚠️ {error}
@@ -88,7 +102,7 @@ const [searchParams] = useSearchParams();
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Full Name"
-          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+          style={inputStyle}
         />
 
         <input
@@ -97,7 +111,7 @@ const [searchParams] = useSearchParams();
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email Address"
-          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+          style={inputStyle}
         />
 
         <input
@@ -106,7 +120,7 @@ const [searchParams] = useSearchParams();
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
           placeholder="Phone Number"
-          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+          style={inputStyle}
         />
 
         <input
@@ -116,13 +130,13 @@ const [searchParams] = useSearchParams();
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
-          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+          style={inputStyle}
         />
 
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+          style={{ ...inputStyle }}
         >
           <option value="BUYER">Ticket Buyer</option>
           <option value="ORGANIZER">Event Organizer</option>
@@ -133,9 +147,9 @@ const [searchParams] = useSearchParams();
         </Button>
       </form>
 
-      <p style={{ textAlign: "center", marginTop: "20px" }}>
+      <p style={{ textAlign: "center", marginTop: "20px", color: "var(--text)" }}>
         Already have an account?{" "}
-        <Link to="/login">Sign In</Link>
+        <Link to="/login" style={{ color: "var(--accent)" }}>Sign In</Link>
       </p>
     </div>
   );
