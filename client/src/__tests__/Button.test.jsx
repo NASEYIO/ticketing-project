@@ -42,6 +42,6 @@ describe('Button', () => {
   it('applies the danger variant styling', () => {
     render(<Button variant="danger">Delete</Button>);
     const button = screen.getByText('Delete');
-    expect(button).toHaveStyle({ background: '#dc2626' });
+   expect(button).toHaveStyle({ background: 'var(--sol-red, #a62b1e)' });
   });
 });
