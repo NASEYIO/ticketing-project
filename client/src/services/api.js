@@ -21,7 +21,7 @@ const getAuthHeader = () => {
 
 export const api = {
   // Auth: login
- login: async ({ identifier, password }) => {
+  login: async ({ identifier, password }) => {
     try {
       const response = await axios.post(`${BASE_URL}/auth/login`, { identifier, password });
       return response.data;
@@ -82,6 +82,7 @@ export const api = {
       throw new Error(error.response?.data?.message || "M-Pesa Checkout transmission failed.");
     }
   },
+
   // Organizer dashboard metrics
   getOrganizerMetrics: async () => {
     try {
@@ -109,7 +110,8 @@ export const api = {
       throw new Error(error.response?.data?.error || "Could not delete event.");
     }
   },
-// Fetch event categories for the dropdown
+
+  // Fetch event categories for the dropdown
   getCategories: async () => {
     try {
       const response = await axios.get(`${BASE_URL}/categories`);
@@ -134,6 +136,7 @@ export const api = {
       throw new Error(error.response?.data?.error || "Failed to publish listing to database.");
     }
   },
+
   // 4. Retrieve real active tickets stored inside PostgreSQL for this specific profile
   getMyTickets: async () => {
     try {
@@ -147,7 +150,8 @@ export const api = {
       throw new Error(error.response?.data?.message || "Could not retrieve secure tickets.");
     }
   },
-getTicketById: async (ticketId) => {
+
+  getTicketById: async (ticketId) => {
     try {
       const response = await axios.get(`${BASE_URL}/tickets/${ticketId}`, { headers: getAuthHeader() });
       return response.data;
@@ -155,14 +159,22 @@ getTicketById: async (ticketId) => {
       throw new Error(error.response?.data?.error || "Could not load this ticket.");
     }
   },
-  
+
   // ---------- ADMIN ----------
+
+  getAdminAnalytics: async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/admin/analytics`, { headers: getAuthHeader() });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching admin analytics:", error.response?.data || error);
+      throw new Error(error.response?.data?.error || "Could not load analytics.");
+    }
+  },
 
   getAdminUsers: async () => {
     try {
-      const response = await axios.get
-      (`${BASE_URL}/admin/users`, 
-        { headers: getAuthHeader() });
+      const response = await axios.get(`${BASE_URL}/admin/users`, { headers: getAuthHeader() });
       return response.data;
     } catch (error) {
       console.error("Error fetching admin users:", error.response?.data || error);
@@ -221,7 +233,8 @@ getTicketById: async (ticketId) => {
       throw new Error(error.response?.data?.error || "Could not approve event.");
     }
   },
-updateEvent: async (eventId, eventPayload) => {
+
+  updateEvent: async (eventId, eventPayload) => {
     try {
       const response = await axios.patch(
         `${BASE_URL}/events/${eventId}`,
@@ -234,6 +247,7 @@ updateEvent: async (eventId, eventPayload) => {
       throw new Error(error.response?.data?.error || "Failed to update event.");
     }
   },
+
   rejectEvent: async (eventId) => {
     try {
       const response = await axios.delete(
@@ -256,7 +270,8 @@ updateEvent: async (eventId, eventPayload) => {
       throw new Error(error.response?.data?.error || "Could not load orders.");
     }
   },
-deleteUser: async (userId) => {
+
+  deleteUser: async (userId) => {
     try {
       const response = await axios.delete(
         `${BASE_URL}/admin/users/${userId}`,
@@ -268,6 +283,7 @@ deleteUser: async (userId) => {
       throw new Error(error.response?.data?.error || "Could not delete user.");
     }
   },
+
   getAdminTickets: async () => {
     try {
       const response = await axios.get(`${BASE_URL}/admin/tickets`, { headers: getAuthHeader() });
@@ -277,6 +293,7 @@ deleteUser: async (userId) => {
       throw new Error(error.response?.data?.error || "Could not load tickets.");
     }
   },
+
   getUserDetail: async (userId) => {
     try {
       const response = await axios.get(`${BASE_URL}/admin/users/${userId}`, { headers: getAuthHeader() });
@@ -286,6 +303,7 @@ deleteUser: async (userId) => {
       throw new Error(error.response?.data?.error || "Could not load user details.");
     }
   },
+
   forgotPassword: async (email) => {
     try {
       const response = await axios.post(`${BASE_URL}/auth/forgot-password`, { email });
@@ -305,6 +323,7 @@ deleteUser: async (userId) => {
       throw new Error(error.response?.data?.error || "Failed to reset password.");
     }
   },
+
   verifyTicket: async (secretCode) => {
     try {
       const response = await axios.get(`${BASE_URL}/tickets/verify/${secretCode}`);
@@ -316,7 +335,8 @@ deleteUser: async (userId) => {
       throw new Error("Could not verify this ticket. Please try again.");
     }
   },
-createTransfer: async (ticketId, recipientEmail) => {
+
+  createTransfer: async (ticketId, recipientEmail) => {
     try {
       const response = await axios.post(
         `${BASE_URL}/transfers`,
@@ -329,6 +349,7 @@ createTransfer: async (ticketId, recipientEmail) => {
       throw new Error(error.response?.data?.error || "Could not create transfer.");
     }
   },
+
   getTransferDetails: async (code) => {
     try {
       const response = await axios.get(`${BASE_URL}/transfers/${code}`, { headers: getAuthHeader() });

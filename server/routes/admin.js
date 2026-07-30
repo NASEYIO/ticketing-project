@@ -9,6 +9,74 @@ const prisma = new PrismaClient();
 // Every route below requires a valid token AND the ADMIN role.
 router.use(authenticateToken, requireRole(['ADMIN']));
 
+// ---------- ANALYTICS ----------
+
+// GET /admin/analytics - system-wide overview stats
+router.get('/analytics', async (req, res) => {
+  try {
+    // 1. Gross Revenue (sum of completed orders)
+    const revenueAggregate = await prisma.order.aggregate({
+      _sum: { totalAmount: true },
+      where: { status: 'SUCCESSFUL' },
+    });
+
+    // 2. M-Pesa Payment Status Counts
+    const successfulPayments = await prisma.order.count({ where: { status: 'SUCCESSFUL' } });
+    const pendingPayments = await prisma.order.count({ where: { status: 'PENDING' } });
+    const failedPayments = await prisma.order.count({ where: { status: 'FAILED' } });
+
+    // 3. Ticket Counts (Option 1: status === 'USED')
+    const totalTicketsSold = await prisma.ticket.count();
+    const scannedTickets = await prisma.ticket.count({
+      where: { status: 'USED' },
+    });
+
+    // 4. Event Counts
+    const totalEvents = await prisma.event.count({ where: { isApproved: true } });
+    const pendingEvents = await prisma.event.count({ where: { isApproved: false } });
+
+    // 5. User & Organizer Counts
+    const totalUsers = await prisma.user.count();
+    const totalOrganizers = await prisma.user.count({ where: { role: 'ORGANIZER' } });
+
+    // 6. Top 5 Events by Ticket Sales
+    const topEventsQuery = await prisma.event.findMany({
+      take: 5,
+      select: {
+        title: true,
+        _count: { select: { tickets: true } },
+      },
+      orderBy: {
+        tickets: { _count: 'desc' },
+      },
+    });
+
+    const topEvents = topEventsQuery.map((ev) => ({
+      title: ev.title,
+      ticketsSold: ev._count.tickets,
+    }));
+
+    res.json({
+      totalRevenue: revenueAggregate._sum.totalAmount || 0,
+      totalTicketsSold,
+      scannedTickets,
+      totalEvents,
+      pendingEvents,
+      totalUsers,
+      totalOrganizers,
+      topEvents,
+      payments: {
+        successful: successfulPayments,
+        pending: pendingPayments,
+        failed: failedPayments,
+      },
+    });
+  } catch (err) {
+    console.error('Analytics Error:', err);
+    res.status(500).json({ error: 'Failed to fetch admin analytics' });
+  }
+});
+
 // ---------- USERS ----------
 
 // GET /admin/users - list all users
@@ -30,6 +98,50 @@ router.get('/users', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// GET /admin/users/:id - full detail for a single user
+router.get('/users/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        isBanned: true,
+        createdAt: true,
+        updatedAt: true,
+        events: {
+          select: { id: true, title: true, venue: true, date: true, isApproved: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        },
+        tickets: {
+          select: {
+            id: true,
+            status: true,
+            createdAt: true,
+            event: { select: { title: true } },
+            tier: { select: { name: true, price: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        orders: {
+          select: { id: true, totalAmount: true, status: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch user details' });
   }
 });
 
@@ -82,20 +194,20 @@ router.delete('/users/:id', async (req, res) => {
   try {
     await prisma.$transaction(async (tx) => {
       const events = await tx.event.findMany({ where: { organizerId: id }, select: { id: true } });
-      const eventIds = events.map(e => e.id);
+      const eventIds = events.map((e) => e.id);
 
       const tiers = await tx.tier.findMany({ where: { eventId: { in: eventIds } }, select: { id: true } });
-      const tierIds = tiers.map(t => t.id);
+      const tierIds = tiers.map((t) => t.id);
 
       const orders = await tx.order.findMany({ where: { buyerId: id }, select: { id: true } });
-      const orderIds = orders.map(o => o.id);
+      const orderIds = orders.map((o) => o.id);
 
       await tx.ticket.deleteMany({
-        where: { OR: [{ eventId: { in: eventIds } }, { tierId: { in: tierIds } }, { buyerId: id }] }
+        where: { OR: [{ eventId: { in: eventIds } }, { tierId: { in: tierIds } }, { buyerId: id }] },
       });
 
       await tx.payment.deleteMany({
-        where: { OR: [{ tierId: { in: tierIds } }, { orderId: { in: orderIds } }] }
+        where: { OR: [{ tierId: { in: tierIds } }, { orderId: { in: orderIds } }] },
       });
 
       await tx.order.deleteMany({ where: { buyerId: id } });
@@ -191,49 +303,6 @@ router.get('/tickets', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch tickets' });
-  }
-  });
-  // GET /admin/users/:id - full detail for a single user
-router.get('/users/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phoneNumber: true,
-        role: true,
-        isBanned: true,
-        createdAt: true,
-        updatedAt: true,
-        events: {
-          select: { id: true, title: true, venue: true, date: true, isApproved: true, createdAt: true },
-          orderBy: { createdAt: 'desc' },
-        },
-        tickets: {
-          select: {
-            id: true,
-            status: true,
-            createdAt: true,
-            event: { select: { title: true } },
-            tier: { select: { name: true, price: true } },
-          },
-          orderBy: { createdAt: 'desc' },
-        },
-        orders: {
-          select: { id: true, totalAmount: true, status: true, createdAt: true },
-          orderBy: { createdAt: 'desc' },
-        },
-      },
-    });
-
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch user details' });
   }
 });
 

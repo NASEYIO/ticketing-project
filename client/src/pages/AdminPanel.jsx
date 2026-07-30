@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import Button from "../components/Button";
 import { api } from "../services/api";
 
-const TABS = ["Users", "Events", "Orders", "Tickets"];
+const TABS = ["Analytics", "Users", "Events", "Orders", "Tickets"];
 
 function AdminPanel({ user }) {
   const isAdmin = user?.role === "ADMIN";
-  const [activeTab, setActiveTab] = useState("Users");
+  const [activeTab, setActiveTab] = useState("Analytics");
 
   if (!user || !isAdmin) {
     return (
@@ -17,10 +17,15 @@ function AdminPanel({ user }) {
   }
 
   return (
-    <div>
-      <h2 style={{ color: "#dc2626" }}>🛡️ Platform Control Panel</h2>
-      <p style={{ color: "#64748b" }}>Manage users, events, orders, and tickets.</p>
+    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "20px" }}>
+      <h2 style={{ color: "var(--sol-red, #a62b1e)", margin: "0 0 6px 0" }}>
+        🛡️ Platform Control Panel
+      </h2>
+      <p style={{ color: "#64748b", margin: 0 }}>
+        System-wide analytics, users, event approvals, and financial orders.
+      </p>
 
+      {/* TABS HEADER */}
       <div style={{ display: "flex", gap: "8px", marginTop: "20px", borderBottom: "1px solid #e2e8f0" }}>
         {TABS.map((tab) => (
           <button
@@ -32,8 +37,8 @@ function AdminPanel({ user }) {
               background: "transparent",
               cursor: "pointer",
               fontWeight: activeTab === tab ? "700" : "500",
-              color: activeTab === tab ? "#dc2626" : "#64748b",
-              borderBottom: activeTab === tab ? "2px solid #dc2626" : "2px solid transparent",
+              color: activeTab === tab ? "var(--sol-red, #a62b1e)" : "#64748b",
+              borderBottom: activeTab === tab ? "3px solid var(--sol-red, #a62b1e)" : "3px solid transparent",
             }}
           >
             {tab}
@@ -41,12 +46,116 @@ function AdminPanel({ user }) {
         ))}
       </div>
 
+      {/* TAB CONTENT */}
       <div style={{ marginTop: "25px" }}>
+        {activeTab === "Analytics" && <AnalyticsTab />}
         {activeTab === "Users" && <UsersTab />}
         {activeTab === "Events" && <EventsTab />}
         {activeTab === "Orders" && <OrdersTab />}
         {activeTab === "Tickets" && <TicketsTab />}
       </div>
+    </div>
+  );
+}
+
+// ---------- ANALYTICS TAB ----------
+function AnalyticsTab() {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // Fetch aggregated data from backend
+        const data = await api.getAdminAnalytics();
+        setStats(data);
+      } catch (err) {
+        setError(err.message || "Failed to load analytics");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) return <p>Loading system analytics...</p>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* SUMMARY CARDS GRID */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
+        <MetricCard
+          title="Total Gross Revenue"
+          value={`KES ${stats?.totalRevenue?.toLocaleString() || 0}`}
+          subtitle="From completed transactions"
+          color="var(--sol-red, #a62b1e)"
+        />
+        <MetricCard
+          title="Tickets Sold"
+          value={stats?.totalTicketsSold || 0}
+          subtitle={`${stats?.scannedTickets || 0} Checked In`}
+          color="#16a34a"
+        />
+        <MetricCard
+          title="Active Events"
+          value={stats?.totalEvents || 0}
+          subtitle={`${stats?.pendingEvents || 0} Pending Approval`}
+          color="#d97706"
+        />
+        <MetricCard
+          title="Total Users"
+          value={stats?.totalUsers || 0}
+          subtitle={`${stats?.totalOrganizers || 0} Organizers`}
+          color="#2563eb"
+        />
+      </div>
+
+      {/* DETAILED STATS SECTIONS */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
+        {/* Top Events */}
+        <Panel title="🔥 Top Performing Events">
+          {stats?.topEvents?.length === 0 ? (
+            <p style={{ color: "#666" }}>No ticket sales yet.</p>
+          ) : (
+            stats?.topEvents?.map((event, idx) => (
+              <div key={idx} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #f1f5f9" }}>
+                <span>{event.title}</span>
+                <strong style={{ color: "var(--sol-red, #a62b1e)" }}>{event.ticketsSold} tickets</strong>
+              </div>
+            ))
+          )}
+        </Panel>
+
+        {/* Payment Health */}
+        <Panel title="💳 M-Pesa Payment Status">
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "10px" }}>
+            <StatRow label="Successful Payments" count={stats?.payments?.successful || 0} statusColor="#16a34a" />
+            <StatRow label="Pending Transactions" count={stats?.payments?.pending || 0} statusColor="#d97706" />
+            <StatRow label="Failed / Cancelled" count={stats?.payments?.failed || 0} statusColor="#dc2626" />
+          </div>
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+// Helper Metric Card Component
+function MetricCard({ title, value, subtitle, color }) {
+  return (
+    <div style={{ background: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0", borderLeft: `5px solid ${color}` }}>
+      <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748b", fontWeight: "600", textTransform: "uppercase" }}>{title}</p>
+      <h2 style={{ margin: "8px 0 4px 0", fontSize: "1.6rem", color: "#0f172a" }}>{value}</h2>
+      <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748b" }}>{subtitle}</p>
+    </div>
+  );
+}
+
+function StatRow({ label, count, statusColor }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f8fafc", borderRadius: "6px" }}>
+      <span style={{ fontSize: "0.9rem", color: "#334155" }}>{label}</span>
+      <strong style={{ color: statusColor, fontSize: "1rem" }}>{count}</strong>
     </div>
   );
 }
