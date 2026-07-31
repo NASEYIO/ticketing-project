@@ -93,12 +93,18 @@ function OrganizerDashboard() {
                     ))}
                   </td>
                   <td style={{ padding: "16px", color: "#10b981", fontWeight: "bold" }}>KES {evt.revenue?.toLocaleString() || 0}</td>
-                 <td style={{ padding: "16px", textAlign: "center" }}>
+                <td style={{ padding: "16px", textAlign: "center" }}>
                     <Link
                       to={`/organizer/edit/${evt.id}`}
                       style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #dbeafe", padding: "6px 12px", borderRadius: "6px", fontWeight: "500", textDecoration: "none", marginRight: "8px", display: "inline-block" }}
                     >
                       ✏️ Edit
+                    </Link>
+                    <Link
+                      to={`/organizer/scan/${evt.id}`}
+                      style={{ background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0", padding: "6px 12px", borderRadius: "6px", fontWeight: "500", textDecoration: "none", marginRight: "8px", display: "inline-block" }}
+                    >
+                      🚪 Scan Gate
                     </Link>
                     <button
                       onClick={() => handleDeleteEvent(evt.id, evt.title)}

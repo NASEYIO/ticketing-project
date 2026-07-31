@@ -371,4 +371,25 @@ export const api = {
       throw new Error(error.response?.data?.error || "Could not accept transfer.");
     }
   },
+  getEventCodesForOfflineScanning: async (eventId) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/tickets/event/${eventId}/codes`, { headers: getAuthHeader() });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || "Could not download ticket codes.");
+    }
+  },
+
+  syncOfflineScans: async (scans) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/tickets/sync-offline-scans`,
+        { scans },
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || "Could not sync scans.");
+    }
+  },
 };

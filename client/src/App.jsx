@@ -20,6 +20,7 @@ import VerifyTicket from "./pages/VerifyTicket.jsx";
 import AcceptTransfer from "./pages/AcceptTransfer.jsx";
 import TermsOfService from "./pages/TermsOfService.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
+import GateScanner from "./pages/GateScanner.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -317,7 +318,10 @@ function App() {
               <Route path="/verify" element={<VerifyTicket />} />
               <Route path="/accept-transfer" element={<AcceptTransfer user={user} />} />
               <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
+             
+             <Route path="/privacy" element={<PrivacyPolicy />} />
+           <Route path="/organizer/scan/:eventId" element={<GateScanner user={user} />} />
+
             </Routes>
           </div>
         </main>
